@@ -1,7 +1,7 @@
-Welcome to Example Application's documentation!
-===============================================
+Welcome to OpenAstroFocuser's documentation!
+=============================================
 
-This is a simple Sphinx documentation setup for ``example-application``.
+This is a simple Sphinx documentation setup for ``OpenAstroFocuser``.
 
 .. toctree::
    :maxdepth: 2

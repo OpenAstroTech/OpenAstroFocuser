@@ -21,7 +21,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          path: example-application
+          path: OpenAstroFocuser
           persist-credentials: false
 
       - name: Set up Python
@@ -32,12 +32,12 @@ jobs:
       - name: Setup Zephyr project
         uses: zephyrproject-rtos/action-zephyr-setup@v1
         with:
-          app-path: example-application
+          app-path: OpenAstroFocuser
           toolchains: arm-zephyr-eabi
           ccache-cache-key: ${{ matrix.os }}
 
       - name: Build firmware
-        working-directory: example-application
+        working-directory: OpenAstroFocuser
         shell: bash
         run: |
           if [ "${{ runner.os }}" = "Windows" ]; then
@@ -46,7 +46,7 @@ jobs:
           west twister -T app -v --inline-logs --integration $EXTRA_TWISTER_FLAGS
 
       - name: Twister Tests
-        working-directory: example-application
+        working-directory: OpenAstroFocuser
         shell: bash
         run: |
           if [ "${{ runner.os }}" = "Windows" ]; then

@@ -1,5 +1,5 @@
 # Introduction
 
-This is the Doxygen documentation for [example-application].
+This is the Doxygen documentation for [OpenAstroFocuser].
 
-[example-application]: https://github.com/zephyrproject-rtos/example-application
+[OpenAstroFocuser]: https://github.com/OpenAstroTech/OpenAstroFocuser

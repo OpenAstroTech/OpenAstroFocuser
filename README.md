@@ -1,21 +1,22 @@
-# Zephyr Example Application
+# OpenAstroFocuser
 
-<a href="https://github.com/zephyrproject-rtos/example-application/actions/workflows/build.yml?query=branch%3Amain">
-  <img src="https://github.com/zephyrproject-rtos/example-application/actions/workflows/build.yml/badge.svg?event=push">
+<a href="https://github.com/OpenAstroTech/OpenAstroFocuser/actions/workflows/build.yml?query=branch%3Amain">
+  <img src="https://github.com/OpenAstroTech/OpenAstroFocuser/actions/workflows/build.yml/badge.svg?event=push">
 </a>
-<a href="https://github.com/zephyrproject-rtos/example-application/actions/workflows/docs.yml?query=branch%3Amain">
-  <img src="https://github.com/zephyrproject-rtos/example-application/actions/workflows/docs.yml/badge.svg?event=push">
+<a href="https://github.com/OpenAstroTech/OpenAstroFocuser/actions/workflows/docs.yml?query=branch%3Amain">
+  <img src="https://github.com/OpenAstroTech/OpenAstroFocuser/actions/workflows/docs.yml/badge.svg?event=push">
 </a>
-<a href="https://zephyrproject-rtos.github.io/example-application">
+<a href="https://zephyrproject-rtos.github.io/OpenAstroFocuser">
   <img alt="Documentation" src="https://img.shields.io/badge/documentation-3D578C?logo=sphinx&logoColor=white">
 </a>
-<a href="https://zephyrproject-rtos.github.io/example-application/doxygen">
+<a href="https://zephyrproject-rtos.github.io/OpenAstroFocuser/doxygen">
   <img alt="API Documentation" src="https://img.shields.io/badge/API-documentation-3D578C?logo=c&logoColor=white">
 </a>
 
-This repository contains a Zephyr example application. The main purpose of this
-repository is to serve as a reference on how to structure Zephyr-based
-applications. Some of the features demonstrated in this example are:
+This repository contains OpenAstroFocuser, a Zephyr-based focuser application
+derived from the upstream template. It continues to serve as a reference on how
+to structure Zephyr-based applications while showcasing the focuser firmware
+itself. Some of the features demonstrated in this application are:
 
 - Basic [Zephyr application][app_dev] skeleton
 - [Zephyr workspace applications][workspace_app]
@@ -33,7 +34,7 @@ applications. Some of the features demonstrated in this example are:
 This repository is versioned together with the [Zephyr main tree][zephyr]. This
 means that every time that Zephyr is tagged, this repository is tagged as well
 with the same version number, and the [manifest](west.yml) entry for `zephyr`
-will point to the corresponding Zephyr tag. For example, the `example-application`
+will point to the corresponding Zephyr tag. For example, the `OpenAstroFocuser`
 v2.6.0 will point to Zephyr v2.6.0. Note that the `main` branch always
 points to the development branch of Zephyr, also `main`.
 
@@ -57,12 +58,12 @@ environment. Follow the official
 ### Initialization
 
 The first step is to initialize the workspace folder (``my-workspace``) where
-the ``example-application`` and all Zephyr modules will be cloned. Run the following
+``OpenAstroFocuser`` and all Zephyr modules will be cloned. Run the following
 command:
 
 ```shell
-# initialize my-workspace for the example-application (main branch)
-west init -m https://github.com/zephyrproject-rtos/example-application --mr main my-workspace
+# initialize my-workspace for OpenAstroFocuser (main branch)
+west init -m https://github.com/OpenAstroTech/OpenAstroFocuser --mr main my-workspace
 # update Zephyr modules
 cd my-workspace
 west update
@@ -73,7 +74,7 @@ west update
 To build the application, run the following command:
 
 ```shell
-cd example-application
+cd OpenAstroFocuser
 west build -b $BOARD app
 ```
 

@@ -11,35 +11,31 @@ LOG_MODULE_DECLARE(focuser, CONFIG_APP_LOG_LEVEL);
 namespace
 {
 
-constexpr const char kFirmwareVersion[] = "10";
+	constexpr const char kFirmwareVersion[] = "10";
 
-uint32_t compute_step_period_us(uint8_t multiplier)
-{
-	uint32_t m = (multiplier == 0U) ? 1U : static_cast<uint32_t>(multiplier);
-	uint32_t steps_per_second = 2000U / m;
-	if (steps_per_second < 100U)
+	uint32_t compute_step_period_us(uint8_t multiplier)
 	{
-		steps_per_second = 100U;
+		uint32_t m = (multiplier == 0U) ? 1U : static_cast<uint32_t>(multiplier);
+		uint32_t steps_per_second = 2000U / m;
+		if (steps_per_second < 100U)
+		{
+			steps_per_second = 100U;
+		}
+		if (steps_per_second == 0U)
+		{
+			steps_per_second = 100U;
+		}
+
+		return Z_HZ_us / steps_per_second;
 	}
-	if (steps_per_second == 0U)
-	{
-		steps_per_second = 100U;
-	}
-	return 1000000U / steps_per_second;
-}
 
 } // namespace
 
 FirmwareHandler::FirmwareHandler(const struct device *stepper_dev,
-		       const struct device *stepper_drv_dev)
+								 const struct device *stepper_drv_dev)
 	: m_stepper(stepper_dev), m_stepper_drv(stepper_drv_dev)
 {
-	if (enable_stepper_driver() != 0)
-	{
-		MutexLock lock(m_state.lock);
-		m_state.moving = false;
-		return;
-	}
+	(void)enable_stepper_driver();
 }
 
 int FirmwareHandler::initialise()
@@ -85,9 +81,6 @@ void FirmwareHandler::initialise_state()
 	k_sem_init(&m_state.move_sem, 0, K_SEM_MAX_LIMIT);
 	m_state.move_request = false;
 	m_state.cancel_move = false;
-	m_state.moving = false;
-	m_state.driver_enabled = false;
-	m_state.current_position = 0;
 	m_state.staged_position = 0U;
 	m_state.desired_position = 0U;
 	m_state.speed_multiplier = 1U;
@@ -114,15 +107,11 @@ void FirmwareHandler::motion_loop()
 				{
 					should_cancel = true;
 					m_state.cancel_move = false;
-					m_state.moving = false;
-					m_state.desired_position =
-						static_cast<uint16_t>(m_state.current_position & 0xFFFF);
 				}
 				else if (m_state.move_request)
 				{
 					target = m_state.desired_position;
 					m_state.move_request = false;
-					m_state.moving = true;
 					have_move = true;
 					LOG_DBG("Starting motion toward 0x%04x (%u)", target, target);
 				}
@@ -131,6 +120,9 @@ void FirmwareHandler::motion_loop()
 			if (should_cancel)
 			{
 				(void)stepper_stop(m_stepper);
+				const uint16_t actual16 = static_cast<uint16_t>(read_actual_position() & 0xFFFF);
+				MutexLock lock(m_state.lock);
+				m_state.desired_position = actual16;
 				break;
 			}
 
@@ -146,12 +138,12 @@ void FirmwareHandler::motion_loop()
 
 void FirmwareHandler::stop()
 {
+	const uint16_t actual16 = static_cast<uint16_t>(read_actual_position() & 0xFFFF);
 	{
 		MutexLock lock(m_state.lock);
 		m_state.cancel_move = true;
 		m_state.move_request = false;
-		m_state.moving = false;
-		m_state.desired_position = static_cast<uint16_t>(m_state.current_position & 0xFFFF);
+		m_state.desired_position = actual16;
 	}
 	(void)stepper_stop(m_stepper);
 	disable_stepper_driver();
@@ -162,9 +154,11 @@ void FirmwareHandler::stop()
 uint16_t FirmwareHandler::getCurrentPosition()
 {
 	const int32_t actual = read_actual_position();
-	MutexLock lock(m_state.lock);
-	update_current_position_locked(actual);
-	uint16_t pos = static_cast<uint16_t>(actual & 0xFFFF);
+	const uint16_t pos = static_cast<uint16_t>(actual & 0xFFFF);
+	{
+		MutexLock lock(m_state.lock);
+		m_state.desired_position = pos;
+	}
 	LOG_DBG("getCurrentPosition -> 0x%04x (%u)", pos, pos);
 	return pos;
 }
@@ -178,12 +172,10 @@ void FirmwareHandler::setCurrentPosition(uint16_t position)
 	}
 
 	MutexLock lock(m_state.lock);
-	m_state.current_position = static_cast<int32_t>(position);
 	m_state.staged_position = position;
 	m_state.desired_position = position;
 	m_state.move_request = false;
 	m_state.cancel_move = false;
-	m_state.moving = false;
 	LOG_INF("setCurrentPosition 0x%04x (%u)", position, position);
 }
 
@@ -226,15 +218,21 @@ void FirmwareHandler::setHalfStep(bool enabled)
 {
 	MutexLock lock(m_state.lock);
 	LOG_INF("setHalfStep %s (was %s)", enabled ? "true" : "false",
-		m_state.half_step ? "true" : "false");
+			m_state.half_step ? "true" : "false");
 	m_state.half_step = enabled;
 }
 
 bool FirmwareHandler::isMoving()
 {
-	MutexLock lock(m_state.lock);
-	LOG_DBG("isMoving -> %s", m_state.moving ? "true" : "false");
-	return m_state.moving;
+	bool moving = false;
+	int ret = stepper_is_moving(m_stepper, &moving);
+	if (ret != 0)
+	{
+		LOG_WRN("stepper_is_moving failed (%d)", ret);
+		return false;
+	}
+	LOG_DBG("isMoving -> %s", moving ? "true" : "false");
+	return moving;
 }
 
 std::string FirmwareHandler::getFirmwareVersion()
@@ -277,9 +275,9 @@ uint8_t FirmwareHandler::getTemperatureCoefficientRaw()
 {
 	MutexLock lock(m_state.lock);
 	LOG_DBG("getTemperatureCoefficientRaw -> 0x%02x (%d -> %.1f)",
-		static_cast<uint8_t>(m_state.temperature_coeff_times2),
-		static_cast<int>(m_state.temperature_coeff_times2),
-		static_cast<double>(m_state.temperature_coeff_times2) / 2.0);
+			static_cast<uint8_t>(m_state.temperature_coeff_times2),
+			static_cast<int>(m_state.temperature_coeff_times2),
+			static_cast<double>(m_state.temperature_coeff_times2) / 2.0);
 	return static_cast<uint8_t>(m_state.temperature_coeff_times2);
 }
 
@@ -293,15 +291,11 @@ void FirmwareHandler::execute_move(uint16_t target)
 
 	if (enable_stepper_driver() != 0)
 	{
-		MutexLock lock(m_state.lock);
-		m_state.moving = false;
 		return;
 	}
 
 	if (apply_step_interval(interval_ns) != 0)
 	{
-		MutexLock lock(m_state.lock);
-		m_state.moving = false;
 		return;
 	}
 
@@ -309,8 +303,6 @@ void FirmwareHandler::execute_move(uint16_t target)
 	if (ret != 0)
 	{
 		LOG_ERR("Failed to start move to 0x%04x (%d)", target, ret);
-		MutexLock lock(m_state.lock);
-		m_state.moving = false;
 		return;
 	}
 
@@ -350,11 +342,11 @@ void FirmwareHandler::execute_move(uint16_t target)
 
 	const int32_t actual = read_actual_position();
 	bool pending_move = false;
+	const uint16_t actual16 = static_cast<uint16_t>(actual & 0xFFFF);
 	{
 		MutexLock lock(m_state.lock);
-		update_current_position_locked(actual);
+		m_state.desired_position = actual16;
 		pending_move = m_state.move_request;
-		m_state.moving = false;
 	}
 	if (!pending_move)
 	{
@@ -378,12 +370,6 @@ int FirmwareHandler::apply_step_interval(uint64_t interval_ns)
 	return ret;
 }
 
-void FirmwareHandler::update_current_position_locked(int32_t position)
-{
-	m_state.current_position = position;
-	m_state.desired_position = static_cast<uint16_t>(position & 0xFFFF);
-}
-
 int32_t FirmwareHandler::read_actual_position()
 {
 	int32_t actual = 0;
@@ -391,8 +377,12 @@ int32_t FirmwareHandler::read_actual_position()
 	if (ret != 0)
 	{
 		LOG_WRN("Failed to query actual position (%d)", ret);
-		MutexLock lock(m_state.lock);
-		return m_state.current_position;
+		uint16_t fallback = 0U;
+		{
+			MutexLock lock(m_state.lock);
+			fallback = m_state.desired_position;
+		}
+		return static_cast<int32_t>(fallback);
 	}
 	return actual;
 }
@@ -404,24 +394,11 @@ int FirmwareHandler::enable_stepper_driver()
 		return 0;
 	}
 
-	{
-		MutexLock lock(m_state.lock);
-		if (m_state.driver_enabled)
-		{
-			return 0;
-		}
-	}
-
 	const int ret = stepper_drv_enable(m_stepper_drv);
-	if (ret != 0)
+	if ((ret != 0) && (ret != -EALREADY))
 	{
 		LOG_ERR("Failed to enable stepper driver (%d)", ret);
 		return ret;
-	}
-
-	{
-		MutexLock lock(m_state.lock);
-		m_state.driver_enabled = true;
 	}
 
 	return 0;
@@ -434,26 +411,10 @@ void FirmwareHandler::disable_stepper_driver()
 		return;
 	}
 
-	bool was_enabled = false;
-	{
-		MutexLock lock(m_state.lock);
-		was_enabled = m_state.driver_enabled;
-	}
-
-	if (!was_enabled)
-	{
-		return;
-	}
-
 	const int ret = stepper_drv_disable(m_stepper_drv);
-	if (ret != 0)
+	if ((ret != 0) && (ret != -EALREADY))
 	{
 		LOG_WRN("Failed to disable stepper driver (%d)", ret);
 		return;
-	}
-
-	{
-		MutexLock lock(m_state.lock);
-		m_state.driver_enabled = false;
 	}
 }

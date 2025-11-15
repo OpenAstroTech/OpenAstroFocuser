@@ -39,10 +39,7 @@ private:
 		k_sem move_sem{};
 		bool move_request{false};
 		bool cancel_move{false};
-		bool moving{false};
-		bool driver_enabled{false};
 		uint64_t step_interval_ns{500000U};
-		int32_t current_position{0};
 		uint16_t staged_position{0U};
 		uint16_t desired_position{0U};
 		uint8_t speed_multiplier{1U};
@@ -71,7 +68,6 @@ private:
 	void initialise_state();
 	void execute_move(uint16_t target);
 	int apply_step_interval(uint64_t interval_ns);
-	void update_current_position_locked(int32_t position);
 	int32_t read_actual_position();
 	int enable_stepper_driver();
 	void disable_stepper_driver();
