@@ -7,8 +7,6 @@ sample:
 common:
   build_only: true
   integration_platforms:
-    - custom_plank
-    - nucleo_f302r8
     - esp32s3_devkitc_procpu
 tests:
   app.default: {}

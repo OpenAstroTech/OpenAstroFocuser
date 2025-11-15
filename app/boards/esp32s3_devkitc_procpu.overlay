@@ -3,21 +3,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/* Devicetree overlay enabling the example-application on ESP32-S3 DevKitC
- * (PROCPU). The example sensor ties to GPIO4 so users can pull it low, while
- * the blink LED uses GPIO2 for a convenient indicator.
+/* Devicetree overlay enabling the Moonlite focuser firmware on ESP32-S3 DevKitC
+ * (PROCPU). The zephyr,user node provides the stepper driver pin assignments.
  */
 
 / {
-	example_sensor: example-sensor {
-		compatible = "zephyr,example-sensor";
-		input-gpios = <&gpio0 4 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
-	};
-
-	blink_led: blink-led {
-		compatible = "blink-gpio-led";
-		led-gpios = <&gpio0 2 GPIO_ACTIVE_HIGH>;
-		blink-period-ms = <1000>;
+	zephyr,user {
+		focuser-enable-gpios = <&gpio0 5 GPIO_ACTIVE_LOW>;
+		focuser-step-gpios = <&gpio0 16 GPIO_ACTIVE_HIGH>;
+		focuser-dir-gpios = <&gpio0 17 GPIO_ACTIVE_HIGH>;
 	};
 };
 
