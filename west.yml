@@ -6,13 +6,15 @@ manifest:
     west-commands: scripts/west-commands.yml
 
   remotes:
+    - name: jilaypandya
+      url-base: https://github.com/jilaypandya
     - name: zephyrproject-rtos
       url-base: https://github.com/zephyrproject-rtos
 
   projects:
     - name: zephyr
-      remote: zephyrproject-rtos
-      revision: main
+      remote: jilaypandya
+      revision: feature/introduce-step-dir-functions
       import:
         # By using name-allowlist we can clone only the modules that are
         # strictly needed by the application.

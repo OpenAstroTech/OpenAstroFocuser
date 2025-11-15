@@ -1,3 +1,9 @@
+#pragma once
+
+#include "Moonlite.hpp"
+
+#if 0
+
 #ifndef _MOONLITE_H_
 #define _MOONLITE_H_
 
@@ -588,3 +594,5 @@ namespace moonlite
 } // namespace moonlite
 
 #endif
+
+#endif /* Legacy Moonlite.h retained for reference */
