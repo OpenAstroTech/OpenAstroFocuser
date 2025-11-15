@@ -4,7 +4,6 @@
 
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
-#include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/uart.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/util.h>
@@ -28,25 +27,23 @@ LOG_MODULE_REGISTER(focuser, CONFIG_APP_LOG_LEVEL);
 #define SERIAL_THREAD_PRIORITY K_PRIO_PREEMPT(5)
 
 #define FOCUSER_NODE DT_PATH(zephyr_user)
+#define STEPPER_ALIAS DT_ALIAS(stepper)
+#define STEPPER_DRV_ALIAS DT_ALIAS(stepper_drv)
 
 #if !DT_NODE_EXISTS(FOCUSER_NODE)
 #error "zephyr,user node must provide focuser pin assignments"
 #endif
 
-#if !DT_NODE_HAS_PROP(FOCUSER_NODE, focuser_enable_gpios)
-#error "zephyr,user node requires focuser-enable-gpios property"
-#endif
-
-#if !DT_NODE_HAS_PROP(FOCUSER_NODE, focuser_step_gpios)
-#error "zephyr,user node requires focuser-step-gpios property"
-#endif
-
-#if !DT_NODE_HAS_PROP(FOCUSER_NODE, focuser_dir_gpios)
-#error "zephyr,user node requires focuser-dir-gpios property"
-#endif
-
 #if !DT_NODE_HAS_PROP(FOCUSER_NODE, moonlite_uart)
 #error "zephyr,user node requires moonlite_uart phandle"
+#endif
+
+#if !DT_NODE_HAS_STATUS(STEPPER_ALIAS, okay)
+#error "stepper alias must reference an enabled stepper controller"
+#endif
+
+#if !DT_NODE_HAS_STATUS(STEPPER_DRV_ALIAS, okay)
+#error "stepper-drv alias must reference an enabled stepper driver"
 #endif
 
 #if !DT_HAS_CHOSEN(zephyr_console)
@@ -56,14 +53,12 @@ LOG_MODULE_REGISTER(focuser, CONFIG_APP_LOG_LEVEL);
 namespace
 {
 
-	const struct gpio_dt_spec g_enable_spec = GPIO_DT_SPEC_GET(FOCUSER_NODE, focuser_enable_gpios);
-	const struct gpio_dt_spec g_step_spec = GPIO_DT_SPEC_GET(FOCUSER_NODE, focuser_step_gpios);
-	const struct gpio_dt_spec g_dir_spec = GPIO_DT_SPEC_GET(FOCUSER_NODE, focuser_dir_gpios);
-
 	const struct device *const g_console = DEVICE_DT_GET(DT_CHOSEN(zephyr_console));
 	const struct device *const g_proto_uart = DEVICE_DT_GET(DT_PHANDLE(FOCUSER_NODE, moonlite_uart));
+	const struct device *const g_stepper = DEVICE_DT_GET(STEPPER_ALIAS);
+	const struct device *const g_stepper_drv = DEVICE_DT_GET(STEPPER_DRV_ALIAS);
 
-	FirmwareHandler g_handler(g_enable_spec, g_step_spec, g_dir_spec);
+	FirmwareHandler g_handler(g_stepper, g_stepper_drv);
 	moonlite::Parser g_parser(g_handler);
 
 	K_THREAD_STACK_DEFINE(motion_stack, MOTION_THREAD_STACK_SIZE);
@@ -170,6 +165,18 @@ int main(void)
 		return -ENODEV;
 	}
 
+	if (!device_is_ready(g_stepper))
+	{
+		LOG_ERR("Stepper controller device not ready");
+		return -ENODEV;
+	}
+
+	if (!device_is_ready(g_stepper_drv))
+	{
+		LOG_ERR("Stepper driver device not ready");
+		return -ENODEV;
+	}
+
 	int ret = g_handler.initialise();
 	if (ret != 0)
 	{
@@ -179,12 +186,12 @@ int main(void)
 	k_thread_create(&motion_thread_data, motion_stack, K_THREAD_STACK_SIZEOF(motion_stack),
 					&motion_thread, nullptr, nullptr, nullptr, MOTION_THREAD_PRIORITY,
 					0, K_NO_WAIT);
-	k_thread_name_set(&motion_thread_data, "focuser_motion");
+	k_thread_name_set(&motion_thread_data, "motion");
 
 	k_thread_create(&serial_thread_data, serial_stack, K_THREAD_STACK_SIZEOF(serial_stack),
 					&serial_thread, nullptr, nullptr, nullptr, SERIAL_THREAD_PRIORITY,
 					0, K_NO_WAIT);
-	k_thread_name_set(&serial_thread_data, "focuser_serial");
+	k_thread_name_set(&serial_thread_data, "serial");
 
 	LOG_INF("Moonlite focuser ready: UART 9600 8N1");
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <zephyr/kernel.h>
-#include <zephyr/drivers/gpio.h>
+#include <zephyr/device.h>
 
 #include <Moonlite.hpp>
 
@@ -11,9 +11,8 @@
 class FirmwareHandler final : public moonlite::Handler
 {
 public:
-    FirmwareHandler(const gpio_dt_spec &enable_spec,
-		    const gpio_dt_spec &step_spec,
-		    const gpio_dt_spec &dir_spec);
+    FirmwareHandler(const struct device *stepper_dev,
+		    const struct device *stepper_drv_dev);
 
 	int initialise();
 	void motion_loop();
@@ -36,18 +35,13 @@ public:
 private:
 	struct FocuserState
 	{
-		gpio_dt_spec enable{};
-		gpio_dt_spec step{};
-		gpio_dt_spec dir{};
 		k_mutex lock{};
 		k_sem move_sem{};
 		bool move_request{false};
 		bool cancel_move{false};
 		bool moving{false};
-		int direction{1};
-		uint32_t steps_remaining{0U};
-		uint32_t step_period_us{500U};
-		uint32_t pulse_high_us{250U};
+		bool driver_enabled{false};
+		uint64_t step_interval_ns{500000U};
 		int32_t current_position{0};
 		uint16_t staged_position{0U};
 		uint16_t desired_position{0U};
@@ -74,11 +68,15 @@ private:
 	};
 
 	void update_timing_locked();
-	int configure_stepper_pins();
 	void initialise_state();
+	void execute_move(uint16_t target);
+	int apply_step_interval(uint64_t interval_ns);
+	void update_current_position_locked(int32_t position);
+	int32_t read_actual_position();
+	int enable_stepper_driver();
+	void disable_stepper_driver();
 
 	FocuserState m_state{};
-	gpio_dt_spec m_enable_spec{};
-	gpio_dt_spec m_step_spec{};
-	gpio_dt_spec m_dir_spec{};
+	const struct device *m_stepper{nullptr};
+	const struct device *m_stepper_drv{nullptr};
 };
