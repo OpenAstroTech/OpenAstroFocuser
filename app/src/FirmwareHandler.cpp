@@ -35,7 +35,7 @@ FirmwareHandler::FirmwareHandler(const struct device *stepper_dev,
 								 const struct device *stepper_drv_dev)
 	: m_stepper(stepper_dev), m_stepper_drv(stepper_drv_dev)
 {
-	(void)enable_stepper_driver();
+	(void)set_stepper_driver_enabled(true);
 }
 
 int FirmwareHandler::initialise()
@@ -47,7 +47,7 @@ int FirmwareHandler::initialise()
 		return -ENODEV;
 	}
 
-	int ret = enable_stepper_driver();
+	int ret = set_stepper_driver_enabled(true);
 	if (ret != 0)
 	{
 		return ret;
@@ -146,7 +146,7 @@ void FirmwareHandler::stop()
 		m_state.desired_position = actual16;
 	}
 	(void)stepper_stop(m_stepper);
-	disable_stepper_driver();
+	(void)set_stepper_driver_enabled(false);
 	k_sem_give(&m_state.move_sem);
 	LOG_INF("stop()");
 }
@@ -289,7 +289,7 @@ void FirmwareHandler::execute_move(uint16_t target)
 		interval_ns = m_state.step_interval_ns;
 	}
 
-	if (enable_stepper_driver() != 0)
+	if (set_stepper_driver_enabled(true) != 0)
 	{
 		return;
 	}
@@ -350,7 +350,7 @@ void FirmwareHandler::execute_move(uint16_t target)
 	}
 	if (!pending_move)
 	{
-		disable_stepper_driver();
+		(void)set_stepper_driver_enabled(false);
 	}
 	LOG_DBG("Motion complete -> 0x%04x (%d)", static_cast<uint16_t>(actual & 0xFFFF), actual);
 }
@@ -387,34 +387,26 @@ int32_t FirmwareHandler::read_actual_position()
 	return actual;
 }
 
-int FirmwareHandler::enable_stepper_driver()
+int FirmwareHandler::set_stepper_driver_enabled(bool enable)
 {
 	if (m_stepper_drv == nullptr)
 	{
 		return 0;
 	}
 
-	const int ret = stepper_drv_enable(m_stepper_drv);
+	const int ret = enable ? stepper_drv_enable(m_stepper_drv) : stepper_drv_disable(m_stepper_drv);
 	if ((ret != 0) && (ret != -EALREADY))
 	{
-		LOG_ERR("Failed to enable stepper driver (%d)", ret);
+		if (enable)
+		{
+			LOG_ERR("Failed to enable stepper driver (%d)", ret);
+		}
+		else
+		{
+			LOG_WRN("Failed to disable stepper driver (%d)", ret);
+		}
 		return ret;
 	}
 
 	return 0;
-}
-
-void FirmwareHandler::disable_stepper_driver()
-{
-	if (m_stepper_drv == nullptr)
-	{
-		return;
-	}
-
-	const int ret = stepper_drv_disable(m_stepper_drv);
-	if ((ret != 0) && (ret != -EALREADY))
-	{
-		LOG_WRN("Failed to disable stepper driver (%d)", ret);
-		return;
-	}
 }

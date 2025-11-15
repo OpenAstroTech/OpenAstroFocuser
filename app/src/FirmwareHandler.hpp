@@ -69,8 +69,7 @@ private:
 	void execute_move(uint16_t target);
 	int apply_step_interval(uint64_t interval_ns);
 	int32_t read_actual_position();
-	int enable_stepper_driver();
-	void disable_stepper_driver();
+	int set_stepper_driver_enabled(bool enable);
 
 	FocuserState m_state{};
 	const struct device *m_stepper{nullptr};
