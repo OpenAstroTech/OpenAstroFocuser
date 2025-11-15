@@ -4,7 +4,8 @@
  */
 
 /* Devicetree overlay enabling the Moonlite focuser firmware on ESP32-S3 DevKitC
- * (PROCPU). The zephyr,user node provides the stepper driver pin assignments.
+ * (PROCPU). The zephyr,user node provides the stepper driver pin assignments and
+ * the dedicated UART used for the Moonlite serial protocol.
  */
 
 / {
@@ -12,9 +13,30 @@
 		focuser-enable-gpios = <&gpio0 5 GPIO_ACTIVE_LOW>;
 		focuser-step-gpios = <&gpio0 16 GPIO_ACTIVE_HIGH>;
 		focuser-dir-gpios = <&gpio0 17 GPIO_ACTIVE_HIGH>;
+		moonlite_uart = <&uart1>;
 	};
 };
 
 &uart0 {
 	current-speed = <9600>;
+};
+
+&uart1 {
+	status = "okay";
+	current-speed = <9600>;
+	pinctrl-0 = <&moonlite_uart1_default>;
+	pinctrl-names = "default";
+};
+
+&pinctrl {
+	moonlite_uart1_default: moonlite_uart1_default {
+		group1 {
+			pinmux = <UART1_TX_GPIO8>;
+		};
+
+		group2 {
+			pinmux = <UART1_RX_GPIO9>;
+			bias-pull-up;
+		};
+	};
 };
