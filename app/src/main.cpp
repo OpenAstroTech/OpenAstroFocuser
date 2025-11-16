@@ -17,7 +17,7 @@
 #include <cstdint>
 #include <string>
 
-#include "FirmwareHandler.hpp"
+#include "Focuser.hpp"
 
 LOG_MODULE_REGISTER(focuser, CONFIG_APP_LOG_LEVEL);
 
@@ -58,8 +58,8 @@ namespace
 	const struct device *const g_stepper = DEVICE_DT_GET(STEPPER_ALIAS);
 	const struct device *const g_stepper_drv = DEVICE_DT_GET(STEPPER_DRV_ALIAS);
 
-	FirmwareHandler g_handler(g_stepper, g_stepper_drv);
-	moonlite::Parser g_parser(g_handler);
+	Focuser g_focuser(g_stepper, g_stepper_drv);
+	moonlite::Parser g_parser(g_focuser);
 
 	K_THREAD_STACK_DEFINE(motion_stack, MOTION_THREAD_STACK_SIZE);
 	K_THREAD_STACK_DEFINE(serial_stack, SERIAL_THREAD_STACK_SIZE);
@@ -68,7 +68,7 @@ namespace
 
 	void motion_thread(void *, void *, void *)
 	{
-		g_handler.motion_loop();
+		g_focuser.motion_loop();
 	}
 	constexpr size_t kMaxLoggedFrameLen = 80U;
 
@@ -177,7 +177,7 @@ int main(void)
 		return -ENODEV;
 	}
 
-	int ret = g_handler.initialise();
+	int ret = g_focuser.initialise();
 	if (ret != 0)
 	{
 		return ret;
@@ -186,7 +186,7 @@ int main(void)
 	k_thread_create(&motion_thread_data, motion_stack, K_THREAD_STACK_SIZEOF(motion_stack),
 					&motion_thread, nullptr, nullptr, nullptr, MOTION_THREAD_PRIORITY,
 					0, K_NO_WAIT);
-	k_thread_name_set(&motion_thread_data, "motion");
+	k_thread_name_set(&motion_thread_data, "focuser");
 
 	k_thread_create(&serial_thread_data, serial_stack, K_THREAD_STACK_SIZEOF(serial_stack),
 					&serial_thread, nullptr, nullptr, nullptr, SERIAL_THREAD_PRIORITY,

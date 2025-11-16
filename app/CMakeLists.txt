@@ -11,4 +11,4 @@ project(app LANGUAGES C CXX)
 
 target_sources(app PRIVATE
 	src/main.cpp
-	src/FirmwareHandler.cpp)
+	src/Focuser.cpp)
