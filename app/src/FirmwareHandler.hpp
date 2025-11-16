@@ -65,8 +65,8 @@ private:
 	};
 
 	void update_timing_locked();
-	void initialise_state();
-	void execute_move(uint16_t target);
+	void init();
+	void move_to(uint16_t target);
 	int apply_step_interval(uint64_t interval_ns);
 	int32_t read_actual_position();
 	int set_stepper_driver_enabled(bool enable);

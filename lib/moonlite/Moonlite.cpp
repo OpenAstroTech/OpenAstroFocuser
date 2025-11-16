@@ -7,10 +7,11 @@ int expectedPayloadLength(CommandType cmd)
 {
   switch (cmd)
   {
-  case CommandType::set_speed:
-    return 2; // SS
   case CommandType::set_current_position:
   case CommandType::set_new_position:
+    return 4; // PPPP
+  case CommandType::set_speed:
+    return 2; // SS
   case CommandType::get_current_position:
   case CommandType::get_new_position:
   case CommandType::go_to_new_position:
@@ -23,17 +24,10 @@ int expectedPayloadLength(CommandType cmd)
   case CommandType::get_temperature:
   case CommandType::get_temperature_coefficient:
   case CommandType::stop:
-    break;
+  case CommandType::unrecognized:
   default:
-    break;
+    return 0;
   }
-
-  if (cmd == CommandType::set_current_position || cmd == CommandType::set_new_position)
-  {
-    return 4; // PPPP
-  }
-
-  return 0;
 }
 
 CommandType strToCommandType(const char *buffer)

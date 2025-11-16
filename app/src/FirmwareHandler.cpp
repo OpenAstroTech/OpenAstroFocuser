@@ -4,6 +4,8 @@
 #include <zephyr/drivers/stepper.h>
 #include <zephyr/logging/log.h>
 
+#include <app_version.h>
+
 #include <errno.h>
 
 LOG_MODULE_DECLARE(focuser, CONFIG_APP_LOG_LEVEL);
@@ -11,17 +13,13 @@ LOG_MODULE_DECLARE(focuser, CONFIG_APP_LOG_LEVEL);
 namespace
 {
 
-	constexpr const char kFirmwareVersion[] = "10";
+	constexpr const char kFirmwareVersion[] = STRINGIFY(APP_VERSION_MAJOR) STRINGIFY(APP_VERSION_MINOR);
 
 	uint32_t compute_step_period_us(uint8_t multiplier)
 	{
 		uint32_t m = (multiplier == 0U) ? 1U : static_cast<uint32_t>(multiplier);
 		uint32_t steps_per_second = 2000U / m;
 		if (steps_per_second < 100U)
-		{
-			steps_per_second = 100U;
-		}
-		if (steps_per_second == 0U)
 		{
 			steps_per_second = 100U;
 		}
@@ -40,7 +38,7 @@ FirmwareHandler::FirmwareHandler(const struct device *stepper_dev,
 
 int FirmwareHandler::initialise()
 {
-	initialise_state();
+	init();
 	if (m_stepper == nullptr)
 	{
 		LOG_ERR("Stepper controller device is null");
@@ -75,7 +73,7 @@ void FirmwareHandler::update_timing_locked()
 	LOG_DBG("Computed step timing: period=%u us", period_us);
 }
 
-void FirmwareHandler::initialise_state()
+void FirmwareHandler::init()
 {
 	k_mutex_init(&m_state.lock);
 	k_sem_init(&m_state.move_sem, 0, K_SEM_MAX_LIMIT);
@@ -131,7 +129,7 @@ void FirmwareHandler::motion_loop()
 				break;
 			}
 
-			execute_move(target);
+			move_to(target);
 		}
 	}
 }
@@ -281,7 +279,7 @@ uint8_t FirmwareHandler::getTemperatureCoefficientRaw()
 	return static_cast<uint8_t>(m_state.temperature_coeff_times2);
 }
 
-void FirmwareHandler::execute_move(uint16_t target)
+void FirmwareHandler::move_to(uint16_t target)
 {
 	uint64_t interval_ns = 0;
 	{
