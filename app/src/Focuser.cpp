@@ -87,7 +87,7 @@ void Focuser::init()
 	update_timing_locked();
 }
 
-void Focuser::motion_loop()
+void Focuser::loop()
 {
 	while (true)
 	{

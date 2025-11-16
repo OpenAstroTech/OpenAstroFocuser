@@ -15,7 +15,7 @@ public:
 		const struct device *stepper_drv_dev);
 
 	int initialise();
-	void motion_loop();
+	void loop();
 
 	void stop() override;
 	uint16_t getCurrentPosition() override;

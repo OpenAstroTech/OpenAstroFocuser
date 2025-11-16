@@ -21,8 +21,8 @@
 
 LOG_MODULE_REGISTER(focuser, CONFIG_APP_LOG_LEVEL);
 
-#define MOTION_THREAD_STACK_SIZE 2048
-#define MOTION_THREAD_PRIORITY K_PRIO_PREEMPT(4)
+#define FOCUSER_THREAD_STACK_SIZE 2048
+#define FOCUSER_THREAD_PRIORITY K_PRIO_PREEMPT(4)
 #define SERIAL_THREAD_STACK_SIZE 2048
 #define SERIAL_THREAD_PRIORITY K_PRIO_PREEMPT(5)
 
@@ -54,21 +54,30 @@ namespace
 {
 
 	const struct device *const g_console = DEVICE_DT_GET(DT_CHOSEN(zephyr_console));
-	const struct device *const g_proto_uart = DEVICE_DT_GET(DT_PHANDLE(FOCUSER_NODE, moonlite_uart));
+	const struct device *const g_moonlite_uart = DEVICE_DT_GET(DT_PHANDLE(FOCUSER_NODE, moonlite_uart));
 	const struct device *const g_stepper = DEVICE_DT_GET(STEPPER_ALIAS);
 	const struct device *const g_stepper_drv = DEVICE_DT_GET(STEPPER_DRV_ALIAS);
 
 	Focuser g_focuser(g_stepper, g_stepper_drv);
 	moonlite::Parser g_parser(g_focuser);
 
-	K_THREAD_STACK_DEFINE(motion_stack, MOTION_THREAD_STACK_SIZE);
+	K_THREAD_STACK_DEFINE(focuser_stack, FOCUSER_THREAD_STACK_SIZE);
 	K_THREAD_STACK_DEFINE(serial_stack, SERIAL_THREAD_STACK_SIZE);
-	struct k_thread motion_thread_data;
+	struct k_thread focuser_thread_data;
 	struct k_thread serial_thread_data;
 
-	void motion_thread(void *, void *, void *)
+	/////////////////////////////////////////////////////////////////////////////
+
+#define MAX_MSG_SIZE 8
+
+	char rx_buffer[MAX_MSG_SIZE];
+	int rx_buffer_len = 0;
+
+	
+
+	void focuser_thread(void *, void *, void *)
 	{
-		g_focuser.motion_loop();
+		g_focuser.loop();
 	}
 	constexpr size_t kMaxLoggedFrameLen = 80U;
 
@@ -81,7 +90,7 @@ namespace
 		while (true)
 		{
 			unsigned char byte;
-			const int rc = uart_poll_in(g_proto_uart, &byte);
+			const int rc = uart_poll_in(g_moonlite_uart, &byte);
 			if (rc == 0)
 			{
 				const char c = static_cast<char>(byte);
@@ -127,7 +136,7 @@ namespace
 						LOG_INF("Moonlite TX %s", response.c_str());
 						for (char ch : response)
 						{
-							uart_poll_out(g_proto_uart, ch);
+							uart_poll_out(g_moonlite_uart, ch);
 						}
 					}
 					else
@@ -159,7 +168,7 @@ int main(void)
 		return -ENODEV;
 	}
 
-	if (!device_is_ready(g_proto_uart))
+	if (!device_is_ready(g_moonlite_uart))
 	{
 		LOG_ERR("Moonlite UART device not ready");
 		return -ENODEV;
@@ -183,10 +192,10 @@ int main(void)
 		return ret;
 	}
 
-	k_thread_create(&motion_thread_data, motion_stack, K_THREAD_STACK_SIZEOF(motion_stack),
-					&motion_thread, nullptr, nullptr, nullptr, MOTION_THREAD_PRIORITY,
+	k_thread_create(&focuser_thread_data, focuser_stack, K_THREAD_STACK_SIZEOF(focuser_stack),
+					&focuser_thread, nullptr, nullptr, nullptr, FOCUSER_THREAD_PRIORITY,
 					0, K_NO_WAIT);
-	k_thread_name_set(&motion_thread_data, "focuser");
+	k_thread_name_set(&focuser_thread_data, "focuser");
 
 	k_thread_create(&serial_thread_data, serial_stack, K_THREAD_STACK_SIZEOF(serial_stack),
 					&serial_thread, nullptr, nullptr, nullptr, SERIAL_THREAD_PRIORITY,
