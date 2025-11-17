@@ -13,6 +13,7 @@
 
 #include "Configuration.hpp"
 #include "Focuser.hpp"
+#include "FocuserThread.hpp"
 #include "UartHandler.hpp"
 #include "UartThread.hpp"
 
@@ -27,16 +28,9 @@ namespace
 	const struct device *const g_stepper_drv = config::stepper_driver_device();
 
 	Focuser g_focuser(g_stepper, g_stepper_drv);
+	FocuserThread g_focuser_thread(g_focuser);
 	UartHandler g_uart_handler(g_uart_handler_dev);
 	UartThread g_uart_thread(g_focuser, g_uart_handler);
-
-	K_THREAD_STACK_DEFINE(focuser_stack, config::kFocuserThread.stack_size);
-	struct k_thread focuser_thread_data;
-
-	void focuser_thread(void *, void *, void *)
-	{
-		g_focuser.loop();
-	}
 
 } // namespace
 
@@ -80,10 +74,7 @@ int main(void)
 		return ret;
 	}
 
-	k_thread_create(&focuser_thread_data, focuser_stack, K_THREAD_STACK_SIZEOF(focuser_stack),
-				&focuser_thread, nullptr, nullptr, nullptr, config::kFocuserThread.priority,
-					0, K_NO_WAIT);
-	k_thread_name_set(&focuser_thread_data, "focuser");
+	g_focuser_thread.start();
 
 	g_uart_thread.start(config::kSerialThread.priority);
 
