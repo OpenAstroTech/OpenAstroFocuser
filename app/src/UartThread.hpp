@@ -6,11 +6,12 @@
 
 #include "Configuration.hpp"
 
+class Focuser;
 class UartHandler;
 
 class UartThread {
 public:
-	UartThread(moonlite::Parser &parser, UartHandler &uart_handler);
+	UartThread(Focuser &focuser, UartHandler &uart_handler);
 
 	void start(int priority);
 
@@ -20,7 +21,7 @@ private:
 
 	static constexpr std::size_t kMaxLoggedFrameLen = 80U;
 
-	moonlite::Parser &m_parser;
+	moonlite::Parser m_parser;
 	UartHandler &m_uart_handler;
-	struct k_thread m_thread;
+	k_thread m_thread;
 };

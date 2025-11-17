@@ -7,8 +7,6 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/util.h>
 
-#include <Moonlite.hpp>
-
 #include <app_version.h>
 
 #include <errno.h>
@@ -29,9 +27,8 @@ namespace
 	const struct device *const g_stepper_drv = config::stepper_driver_device();
 
 	Focuser g_focuser(g_stepper, g_stepper_drv);
-	moonlite::Parser g_parser(g_focuser);
 	UartHandler g_uart_handler(g_uart_handler_dev);
-	UartThread g_uart_thread(g_parser, g_uart_handler);
+	UartThread g_uart_thread(g_focuser, g_uart_handler);
 
 	K_THREAD_STACK_DEFINE(focuser_stack, config::kFocuserThread.stack_size);
 	struct k_thread focuser_thread_data;

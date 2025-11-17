@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <string>
 
+#include "Focuser.hpp"
 #include "UartHandler.hpp"
 
 LOG_MODULE_DECLARE(focuser);
@@ -14,8 +15,8 @@ namespace
 K_THREAD_STACK_DEFINE(serial_stack, config::kSerialThread.stack_size);
 }
 
-UartThread::UartThread(moonlite::Parser &parser, UartHandler &uart_handler)
-	: m_parser(parser), m_uart_handler(uart_handler)
+UartThread::UartThread(Focuser &focuser, UartHandler &uart_handler)
+	: m_parser(focuser), m_uart_handler(uart_handler)
 {
 }
 
