@@ -33,7 +33,7 @@
 	};
 
 	zephyr,user {
-		moonlite_uart = <&uart1>;
+		uart_handler = <&uart1>;
 	};
 };
 
