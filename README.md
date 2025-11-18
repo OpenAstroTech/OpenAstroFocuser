@@ -11,11 +11,7 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/OpenAstroTech/OpenAstroFocuser">
-    <img src="doc/_static/logo.png" alt="Logo" width="120" height="120">
-  </a>
-
-<h3 align="center">OpenAstroFocuser</h3>
+  <h3 align="center">OpenAstroFocuser</h3>
 
   <p align="center">
     Moonlite-compatible focuser firmware built on Zephyr RTOS.
@@ -143,10 +139,8 @@ west twister -T OpenAstroFocuser/tests --integration
 
 ## Roadmap
 
-- [ ] Additional focuser drivers (TMC2209 advanced tuning, ASCOM bridge)
-- [ ] Bluetooth / Wi-Fi control path
-- [ ] GUI tooling for calibration
-- [ ] Automated hardware-in-the-loop regression suite
+- [ ] Automatic homing / end stop detection.
+- [ ] Saving of last known position in EEPROM
 
 See the [open issues](https://github.com/OpenAstroTech/OpenAstroFocuser/issues) for the full backlog.
 
