@@ -1,139 +1,216 @@
-# OpenAstroFocuser
+<!-- Improved compatibility of back to top link -->
+<a id="readme-top"></a>
 
-<a href="https://github.com/OpenAstroTech/OpenAstroFocuser/actions/workflows/build.yml?query=branch%3Amain">
-  <img src="https://github.com/OpenAstroTech/OpenAstroFocuser/actions/workflows/build.yml/badge.svg?event=push">
-</a>
-<a href="https://github.com/OpenAstroTech/OpenAstroFocuser/actions/workflows/docs.yml?query=branch%3Amain">
-  <img src="https://github.com/OpenAstroTech/OpenAstroFocuser/actions/workflows/docs.yml/badge.svg?event=push">
-</a>
-<a href="https://zephyrproject-rtos.github.io/OpenAstroFocuser">
-  <img alt="Documentation" src="https://img.shields.io/badge/documentation-3D578C?logo=sphinx&logoColor=white">
-</a>
-<a href="https://zephyrproject-rtos.github.io/OpenAstroFocuser/doxygen">
-  <img alt="API Documentation" src="https://img.shields.io/badge/API-documentation-3D578C?logo=c&logoColor=white">
-</a>
+<!-- PROJECT SHIELDS -->
+[![Contributors][contributors-shield]][contributors-url]
+[![Forks][forks-shield]][forks-url]
+[![Stargazers][stars-shield]][stars-url]
+[![Issues][issues-shield]][issues-url]
+[![project_license][license-shield]][license-url]
 
-This repository contains OpenAstroFocuser, a Zephyr-based focuser application
-derived from the upstream template. It continues to serve as a reference on how
-to structure Zephyr-based applications while showcasing the focuser firmware
-itself. Some of the features demonstrated in this application are:
+<!-- PROJECT LOGO -->
+<br />
+<div align="center">
+  <a href="https://github.com/OpenAstroTech/OpenAstroFocuser">
+    <img src="doc/_static/logo.png" alt="Logo" width="120" height="120">
+  </a>
 
-- Basic [Zephyr application][app_dev] skeleton
-- [Zephyr workspace applications][workspace_app]
-- [Zephyr modules][modules]
-- [West T2 topology][west_t2]
-- [Custom boards][board_porting]
-- Custom [devicetree bindings][bindings]
-- Out-of-tree [drivers][drivers]
-- Out-of-tree libraries
-- Example CI configuration (using GitHub Actions)
-- Custom [west extension][west_ext]
-- Custom [Zephyr runner][runner_ext]
-- Doxygen and Sphinx documentation boilerplate
+<h3 align="center">OpenAstroFocuser</h3>
 
-This repository is versioned together with the [Zephyr main tree][zephyr]. This
-means that every time that Zephyr is tagged, this repository is tagged as well
-with the same version number, and the [manifest](west.yml) entry for `zephyr`
-will point to the corresponding Zephyr tag. For example, the `OpenAstroFocuser`
-v2.6.0 will point to Zephyr v2.6.0. Note that the `main` branch always
-points to the development branch of Zephyr, also `main`.
+  <p align="center">
+    Moonlite-compatible focuser firmware built on Zephyr RTOS.
+    <br />
+    <a href="https://openastrotech.github.io/OpenAstroFocuser"><strong>Explore the docs »</strong></a>
+    <br />
+    <br />
+    <a href="https://github.com/OpenAstroTech/OpenAstroFocuser">View Demo</a>
+    ·
+    <a href="https://github.com/OpenAstroTech/OpenAstroFocuser/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
+    ·
+    <a href="https://github.com/OpenAstroTech/OpenAstroFocuser/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>
+  </p>
+</div>
 
-[app_dev]: https://docs.zephyrproject.org/latest/develop/application/index.html
-[workspace_app]: https://docs.zephyrproject.org/latest/develop/application/index.html#zephyr-workspace-app
-[modules]: https://docs.zephyrproject.org/latest/develop/modules.html
-[west_t2]: https://docs.zephyrproject.org/latest/develop/west/workspaces.html#west-t2
-[board_porting]: https://docs.zephyrproject.org/latest/guides/porting/board_porting.html
-[bindings]: https://docs.zephyrproject.org/latest/guides/dts/bindings.html
-[drivers]: https://docs.zephyrproject.org/latest/reference/drivers/index.html
-[zephyr]: https://github.com/zephyrproject-rtos/zephyr
-[west_ext]: https://docs.zephyrproject.org/latest/develop/west/extensions.html
-[runner_ext]: https://docs.zephyrproject.org/latest/develop/modules.html#external-runners
+<!-- TABLE OF CONTENTS -->
+<details>
+  <summary>Table of Contents</summary>
+  <ol>
+    <li>
+      <a href="#about-the-project">About The Project</a>
+      <ul>
+        <li><a href="#built-with">Built With</a></li>
+      </ul>
+    </li>
+    <li>
+      <a href="#getting-started">Getting Started</a>
+      <ul>
+        <li><a href="#prerequisites">Prerequisites</a></li>
+        <li><a href="#installation">Installation</a></li>
+      </ul>
+    </li>
+    <li><a href="#usage">Usage</a></li>
+    <li><a href="#roadmap">Roadmap</a></li>
+    <li><a href="#contributing">Contributing</a></li>
+    <li><a href="#license">License</a></li>
+    <li><a href="#contact">Contact</a></li>
+    <li><a href="#acknowledgments">Acknowledgments</a></li>
+  </ol>
+</details>
+
+## About The Project
+
+[![Moonlite Parser Screenshot][product-screenshot]](https://openastrotech.github.io/OpenAstroFocuser)
+
+OpenAstroFocuser is built for astrophotographers and observatory tinkerers who want reliable, scriptable focusing on DIY hardware. Plug it into any Moonlite-compatible controller (real hardware or software clients such as NINA, Ekos, or ASCOM drivers) and you get:
+
+- **Preset-aware autofocus** – store and recall absolute positions, then let your capture suite step through autofocus routines without losing calibration.
+- **Live telemetry** – query current/new positions, motion state, temperature, and speed over the Moonlite serial link to feed dashboards or automation scripts.
+- **Manual and automated motion** – stage moves, cancel in-flight slews, or flip between half/full-step microstepping directly from your control software.
+- **Configurable speed profiles** – adjust the Moonlite delay multiplier on the fly to trade speed for torque when heavy imaging trains are attached.
+- **Hardware flexibility** – run on ESP32-S3 reference hardware, custom shields, or any board with Zephyr support and a UART interface.
+- **Ready-to-use documentation & tests** – follow the included docs, CI, and ztest suites to adapt the firmware to your rig with confidence.
+
+Every release follows Zephyr `main`, so you always know which toolchain and modules were used to build the shipped firmware.
+
+### Built With
+
+* [![Zephyr][Zephyr.io]][Zephyr-url]
+* [![CMake][CMake]][CMake-url]
+* [![C++20][Cpp]][Cpp-url]
+* [![ESP-IDF][Espidf]][Espidf-url]
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Getting Started
 
-Before getting started, make sure you have a proper Zephyr development
-environment. Follow the official
-[Zephyr Getting Started Guide](https://docs.zephyrproject.org/latest/getting_started/index.html).
+Set up the Zephyr toolchain per the [Getting Started Guide](https://docs.zephyrproject.org/latest/getting_started/index.html). The commands below assume a Linux host and Zephyr SDK.
 
-### Initialization
+### Prerequisites
 
-The first step is to initialize the workspace folder (``my-workspace``) where
-``OpenAstroFocuser`` and all Zephyr modules will be cloned. Run the following
-command:
+- West (installed via `pip install west`)
+- Zephyr SDK or an equivalent toolchain
+- Python 3.10+
+
+### Installation
+
+1. Initialise a workspace pointing at this manifest:
 
 ```shell
-# initialize my-workspace for OpenAstroFocuser (main branch)
-west init -m https://github.com/OpenAstroTech/OpenAstroFocuser --mr main my-workspace
-# update Zephyr modules
-cd my-workspace
+west init -m https://github.com/OpenAstroTech/OpenAstroFocuser --mr main zephyr-focuser
+cd zephyr-focuser
 west update
 ```
 
-### Building and running
+2. Export the Zephyr environment (optional but handy):
 
-To build the application, run the following command:
+   ```shell
+   source zephyr/zephyr-env.sh
+   ```
 
-```shell
-cd OpenAstroFocuser
-west build -b $BOARD app
-```
+3. (Optional) Install Python requirements for documentation:
 
-where `$BOARD` is the target board.
+   ```shell
+   pip install -r OpenAstroFocuser/doc/requirements.txt
+   ```
 
-You can use the `custom_plank` board found in this
-repository. Note that Zephyr sample boards may be used if an
-appropriate overlay is provided (see `app/boards`).
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-A sample debug configuration is also provided. To apply it, run the following
-command:
+## Usage
 
-```shell
-west build -b $BOARD app -- -DEXTRA_CONF_FILE=debug.conf
-```
-
-Once you have built the application, run the following command to flash it:
+### Build & Flash
 
 ```shell
+west build -b esp32s3_devkitc/esp32s3/procpu OpenAstroFocuser/app
 west flash
 ```
 
-### Testing
+Pass `-DEXTRA_CONF_FILE=debug.conf` for verbose logging or switch `-b` to any supported board/overlay.
 
-To execute Twister integration tests, run the following command:
-
-```shell
-west twister -T tests --integration
-```
-
-### Documentation
-
-A minimal documentation setup is provided for Doxygen and Sphinx. To build the
-documentation first change to the ``doc`` folder:
+### Run Moonlite Parser Tests
 
 ```shell
-cd doc
+west build -b qemu_x86 OpenAstroFocuser/tests/lib/moonlite --build-dir build/moonlite_test --pristine auto
+west build -t run --build-dir build/moonlite_test
 ```
 
-Before continuing, check if you have Doxygen installed. It is recommended to
-use the same Doxygen version used in [CI](.github/workflows/docs.yml). To
-install Sphinx, make sure you have a Python installation in place and run:
+### Twister Integration Suite
 
 ```shell
-pip install -r requirements.txt
+west twister -T OpenAstroFocuser/tests --integration
 ```
 
-API documentation (Doxygen) can be built using the following command:
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-```shell
-doxygen
-```
+## Roadmap
 
-The output will be stored in the ``_build_doxygen`` folder. Similarly, the
-Sphinx documentation (HTML) can be built using the following command:
+- [ ] Additional focuser drivers (TMC2209 advanced tuning, ASCOM bridge)
+- [ ] Bluetooth / Wi-Fi control path
+- [ ] GUI tooling for calibration
+- [ ] Automated hardware-in-the-loop regression suite
 
-```shell
-make html
-```
+See the [open issues](https://github.com/OpenAstroTech/OpenAstroFocuser/issues) for the full backlog.
 
-The output will be stored in the ``_build_sphinx`` folder. You may check for
-other output formats other than HTML by running ``make help``.
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+## Contributing
+
+Contributions keep this firmware evolving. If you have ideas or fixes:
+
+1. Fork the repo
+2. Create your feature branch (`git checkout -b feature/AmazingFocuserBoost`)
+3. Commit (`git commit -m 'Add some AmazingFocuserBoost'`)
+4. Push (`git push origin feature/AmazingFocuserBoost`)
+5. Open a Pull Request
+
+Please run the formatter (`west clang-format`) and the applicable tests before sending PRs.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+### Top contributors
+
+<a href="https://github.com/OpenAstroTech/OpenAstroFocuser/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=OpenAstroTech/OpenAstroFocuser" alt="Contributor graph" />
+</a>
+
+## License
+
+Distributed under the Apache License 2.0. See `LICENSE` for details.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+## Contact
+
+Project Link: [https://github.com/OpenAstroTech/OpenAstroFocuser](https://github.com/OpenAstroTech/OpenAstroFocuser)
+
+Zephyr Discord: `#moonlite-focuser`
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+## Acknowledgments
+
+* [Zephyr Project](https://zephyrproject.org)
+* [Moonlite Focuser Protocol Reference](https://moonlitefocuser.com)
+* [Contrib.rocks](https://contrib.rocks)
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<!-- MARKDOWN LINKS & IMAGES -->
+[contributors-shield]: https://img.shields.io/github/contributors/OpenAstroTech/OpenAstroFocuser.svg?style=for-the-badge
+[contributors-url]: https://github.com/OpenAstroTech/OpenAstroFocuser/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/OpenAstroTech/OpenAstroFocuser.svg?style=for-the-badge
+[forks-url]: https://github.com/OpenAstroTech/OpenAstroFocuser/network/members
+[stars-shield]: https://img.shields.io/github/stars/OpenAstroTech/OpenAstroFocuser.svg?style=for-the-badge
+[stars-url]: https://github.com/OpenAstroTech/OpenAstroFocuser/stargazers
+[issues-shield]: https://img.shields.io/github/issues/OpenAstroTech/OpenAstroFocuser.svg?style=for-the-badge
+[issues-url]: https://github.com/OpenAstroTech/OpenAstroFocuser/issues
+[license-shield]: https://img.shields.io/github/license/OpenAstroTech/OpenAstroFocuser.svg?style=for-the-badge
+[license-url]: https://github.com/OpenAstroTech/OpenAstroFocuser/blob/main/LICENSE
+[product-screenshot]: doc/_static/moonlite_parser.png
+[Zephyr.io]: https://img.shields.io/badge/Zephyr-183D4C?style=for-the-badge&logo=zephyr&logoColor=white
+[Zephyr-url]: https://zephyrproject.org
+[CMake]: https://img.shields.io/badge/CMake-064F8C?style=for-the-badge&logo=cmake&logoColor=white
+[CMake-url]: https://cmake.org
+[Cpp]: https://img.shields.io/badge/C%2B%2B20-00599C?style=for-the-badge&logo=cplusplus&logoColor=white
+[Cpp-url]: https://isocpp.org
+[Espidf]: https://img.shields.io/badge/ESP--IDF-E7352C?style=for-the-badge&logo=espressif&logoColor=white
+[Espidf-url]: https://www.espressif.com/en/products/sdks/esp-idf
