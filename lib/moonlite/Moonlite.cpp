@@ -225,12 +225,17 @@ bool Parser::feed(char c, std::string &outResponse)
       respPayload = handleCommand(_cmd, _buf);
     }
 
+    const bool requires_terminator = (_cmd != CommandType::get_firmware_version);
+
     reset();
 
     if (!respPayload.empty())
     {
       outResponse = respPayload;
-      outResponse.push_back('#');
+      if (requires_terminator)
+      {
+        outResponse.push_back('#');
+      }
     }
     return true;
   }

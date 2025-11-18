@@ -19,7 +19,7 @@
 
 	focuser_stepper_driver: focuser_stepper_driver {
 		compatible = "adi,tmc2209";
-		en-gpios = <&gpio0 5 GPIO_ACTIVE_LOW>;
+		en-gpios = <&gpio0 15 GPIO_ACTIVE_LOW>;
 		micro-step-res = <1>;
 		status = "okay";
 	};

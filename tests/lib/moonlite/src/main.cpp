@@ -153,7 +153,7 @@ ZTEST(moonlite_parser, handles_query_commands)
 	zassert_equal(response, std::string("01#"), "GI response");
 
 	zassert_true(feed_frame(parser, ":GV#", response), "GV frame completion");
-	zassert_equal(response, std::string("FW123#"), "GV response");
+	zassert_equal(response, std::string("FW123"), "GV response");
 
 	zassert_true(feed_frame(parser, ":GD#", response), "GD frame completion");
 	zassert_equal(response, std::string("3C#"), "GD response");
