@@ -1,0 +1,6 @@
+common:
+  tags: moonlite
+  integration_platforms:
+    - qemu_x86
+tests:
+  lib.moonlite: {}
