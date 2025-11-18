@@ -16,6 +16,7 @@
 #include "FocuserThread.hpp"
 #include "UartHandler.hpp"
 #include "UartThread.hpp"
+#include "ZephyrStepper.hpp"
 
 LOG_MODULE_REGISTER(focuser, CONFIG_APP_LOG_LEVEL);
 
@@ -27,7 +28,8 @@ namespace
 	const struct device *const g_stepper = config::stepper_device();
 	const struct device *const g_stepper_drv = config::stepper_driver_device();
 
-	Focuser g_focuser(g_stepper, g_stepper_drv);
+	ZephyrFocuserStepper g_stepper_adapter(g_stepper, g_stepper_drv);
+	Focuser g_focuser(g_stepper_adapter);
 	FocuserThread g_focuser_thread(g_focuser);
 	UartHandler g_uart_handler(g_uart_handler_dev);
 	UartThread g_uart_thread(g_focuser, g_uart_handler);
@@ -54,18 +56,6 @@ int main(void)
 	if (ret != 0)
 	{
 		return ret;
-	}
-
-	if (!device_is_ready(g_stepper))
-	{
-		LOG_ERR("Stepper controller device not ready");
-		return -ENODEV;
-	}
-
-	if (!device_is_ready(g_stepper_drv))
-	{
-		LOG_ERR("Stepper driver device not ready");
-		return -ENODEV;
 	}
 
 	ret = g_focuser.initialise();

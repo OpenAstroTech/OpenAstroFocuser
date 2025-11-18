@@ -1,7 +1,5 @@
 #include "Focuser.hpp"
 
-#include <zephyr/device.h>
-#include <zephyr/drivers/stepper.h>
 #include <zephyr/logging/log.h>
 
 #include <app_version.h>
@@ -29,9 +27,8 @@ namespace
 
 } // namespace
 
-Focuser::Focuser(const struct device *stepper_dev,
-		 const struct device *stepper_drv_dev)
-	: m_stepper(stepper_dev), m_stepper_drv(stepper_drv_dev)
+Focuser::Focuser(FocuserStepper &stepper)
+	: m_stepper(stepper)
 {
 	(void)set_stepper_driver_enabled(true);
 }
@@ -39,9 +36,9 @@ Focuser::Focuser(const struct device *stepper_dev,
 int Focuser::initialise()
 {
 	init();
-	if (m_stepper == nullptr)
+	if (!m_stepper.is_ready())
 	{
-		LOG_ERR("Stepper controller device is null");
+		LOG_ERR("Stepper hardware not ready");
 		return -ENODEV;
 	}
 
@@ -51,7 +48,7 @@ int Focuser::initialise()
 		return ret;
 	}
 
-	ret = stepper_set_reference_position(m_stepper, 0);
+	ret = m_stepper.set_reference_position(0);
 	if (ret != 0)
 	{
 		LOG_ERR("Failed to set stepper reference position (%d)", ret);
@@ -117,7 +114,7 @@ void Focuser::loop()
 
 			if (should_cancel)
 			{
-				(void)stepper_stop(m_stepper);
+				(void)m_stepper.stop();
 				const uint16_t actual16 = static_cast<uint16_t>(read_actual_position() & 0xFFFF);
 				MutexLock lock(m_state.lock);
 				m_state.desired_position = actual16;
@@ -143,7 +140,7 @@ void Focuser::stop()
 		m_state.move_request = false;
 		m_state.desired_position = actual16;
 	}
-	(void)stepper_stop(m_stepper);
+	(void)m_stepper.stop();
 	(void)set_stepper_driver_enabled(false);
 	k_sem_give(&m_state.move_sem);
 	LOG_INF("stop()");
@@ -163,7 +160,7 @@ uint16_t Focuser::getCurrentPosition()
 
 void Focuser::setCurrentPosition(uint16_t position)
 {
-	int ret = stepper_set_reference_position(m_stepper, static_cast<int32_t>(position));
+	int ret = m_stepper.set_reference_position(static_cast<int32_t>(position));
 	if (ret != 0)
 	{
 		LOG_ERR("Failed to set reference position (%d)", ret);
@@ -223,7 +220,7 @@ void Focuser::setHalfStep(bool enabled)
 bool Focuser::isMoving()
 {
 	bool moving = false;
-	int ret = stepper_is_moving(m_stepper, &moving);
+	int ret = m_stepper.is_moving(moving);
 	if (ret != 0)
 	{
 		LOG_WRN("stepper_is_moving failed (%d)", ret);
@@ -297,7 +294,7 @@ void Focuser::move_to(uint16_t target)
 		return;
 	}
 
-	int ret = stepper_move_to(m_stepper, static_cast<int32_t>(target));
+	int ret = m_stepper.move_to(static_cast<int32_t>(target));
 	if (ret != 0)
 	{
 		LOG_ERR("Failed to start move to 0x%04x (%d)", target, ret);
@@ -307,7 +304,7 @@ void Focuser::move_to(uint16_t target)
 	while (true)
 	{
 		bool moving = false;
-		ret = stepper_is_moving(m_stepper, &moving);
+		ret = m_stepper.is_moving(moving);
 		if (ret != 0)
 		{
 			LOG_ERR("stepper_is_moving failed (%d)", ret);
@@ -331,7 +328,7 @@ void Focuser::move_to(uint16_t target)
 		if (should_cancel)
 		{
 			LOG_DBG("Stopping active motion per cancel request");
-			(void)stepper_stop(m_stepper);
+			(void)m_stepper.stop();
 			break;
 		}
 
@@ -360,7 +357,7 @@ int Focuser::apply_step_interval(uint64_t interval_ns)
 		return -EINVAL;
 	}
 
-	const int ret = stepper_set_microstep_interval(m_stepper, interval_ns);
+	const int ret = m_stepper.set_microstep_interval(interval_ns);
 	if (ret != 0)
 	{
 		LOG_ERR("Failed to set step interval (%d)", ret);
@@ -371,7 +368,7 @@ int Focuser::apply_step_interval(uint64_t interval_ns)
 int32_t Focuser::read_actual_position()
 {
 	int32_t actual = 0;
-	int ret = stepper_get_actual_position(m_stepper, &actual);
+	int ret = m_stepper.get_actual_position(actual);
 	if (ret != 0)
 	{
 		LOG_WRN("Failed to query actual position (%d)", ret);
@@ -387,12 +384,7 @@ int32_t Focuser::read_actual_position()
 
 int Focuser::set_stepper_driver_enabled(bool enable)
 {
-	if (m_stepper_drv == nullptr)
-	{
-		return 0;
-	}
-
-	const int ret = enable ? stepper_drv_enable(m_stepper_drv) : stepper_drv_disable(m_stepper_drv);
+	const int ret = m_stepper.enable_driver(enable);
 	if ((ret != 0) && (ret != -EALREADY))
 	{
 		if (enable)

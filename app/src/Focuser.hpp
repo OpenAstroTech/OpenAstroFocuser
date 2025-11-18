@@ -1,18 +1,18 @@
 #pragma once
 
 #include <zephyr/kernel.h>
-#include <zephyr/device.h>
 
 #include <Moonlite.hpp>
 
 #include <cstdint>
 #include <string>
 
+#include "FocuserStepper.hpp"
+
 class Focuser final : public moonlite::Handler
 {
 public:
-	Focuser(const struct device *stepper_dev,
-		const struct device *stepper_drv_dev);
+	explicit Focuser(FocuserStepper &stepper);
 
 	int initialise();
 	void loop();
@@ -72,6 +72,5 @@ private:
 	int set_stepper_driver_enabled(bool enable);
 
 	FocuserState m_state{};
-	const struct device *m_stepper{nullptr};
-	const struct device *m_stepper_drv{nullptr};
+	FocuserStepper &m_stepper;
 };

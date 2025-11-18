@@ -14,4 +14,5 @@ target_sources(app PRIVATE
 	src/Focuser.cpp
 	src/FocuserThread.cpp
 	src/UartHandler.cpp
-	src/UartThread.cpp)
+	src/UartThread.cpp
+	src/ZephyrStepper.cpp)
