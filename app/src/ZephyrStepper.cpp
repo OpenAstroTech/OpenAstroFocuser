@@ -93,5 +93,5 @@ int ZephyrFocuserStepper::enable_driver(bool enable)
 		return 0;
 	}
 
-	return enable ? stepper_drv_enable(m_stepper_drv) : stepper_drv_disable(m_stepper_drv);
+	return enable ? stepper_enable(m_stepper_drv) : stepper_disable(m_stepper_drv);
 }

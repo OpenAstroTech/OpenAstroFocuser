@@ -4,31 +4,24 @@
  */
 
 /* Devicetree overlay enabling the Moonlite focuser firmware on ESP32-S3 DevKitC
- * (PROCPU). The dedicated stepper controller is described as a Zephyr
- * gpio-step-dir device and exposed via the "stepper" alias, while the discrete
- * TMC2209 driver ("stepper-drv" alias) manages the enable signal through the
- * Zephyr stepper driver API. The zephyr,user node supplies the UART phandle
+ * (PROCPU). The TMC2209 stepper driver is exposed via the "stepper" and
+ * "stepper-drv" aliases, while the zephyr,user node supplies the UART phandle
  * consumed by the application.
  */
 
 / {
 	aliases {
 		stepper = &focuser_stepper;
-		stepper-drv = &focuser_stepper_driver;
-	};
-
-	focuser_stepper_driver: focuser_stepper_driver {
-		compatible = "adi,tmc2209";
-		en-gpios = <&gpio0 15 GPIO_ACTIVE_LOW>;
-		micro-step-res = <1>;
-		status = "okay";
+		stepper-drv = &focuser_stepper;
 	};
 
 	focuser_stepper: focuser_stepper {
-		compatible = "zephyr,gpio-step-dir-controller";
+		compatible = "adi,tmc2209";
 		step-gpios = <&gpio0 16 GPIO_ACTIVE_HIGH>;
 		dir-gpios = <&gpio0 17 GPIO_ACTIVE_HIGH>;
+		en-gpios = <&gpio0 18 GPIO_ACTIVE_LOW>;
 		step-width-ns = <10000>;
+		micro-step-res = <1>;
 		status = "okay";
 	};
 
