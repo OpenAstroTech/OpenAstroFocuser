@@ -8,7 +8,7 @@
 #include "Focuser.hpp"
 #include "UartHandler.hpp"
 
-LOG_MODULE_DECLARE(focuser);
+LOG_MODULE_REGISTER(uart_thread, CONFIG_APP_LOG_LEVEL);
 
 namespace
 {
@@ -78,26 +78,26 @@ void UartThread::run()
 			{
 				if (frame_overflow)
 				{
-					LOG_INF("Moonlite RX %s... (truncated)", frame_log.c_str());
+					LOG_INF("RX %s... (truncated)", frame_log.c_str());
 				}
 				else
 				{
-					LOG_INF("Moonlite RX %s", frame_log.c_str());
+					LOG_INF("RX %s", frame_log.c_str());
 				}
 			}
 			else
 			{
-				LOG_INF("Moonlite RX <unframed>");
+				LOG_INF("RX <unframed>");
 			}
 
 			if (!response.empty())
 			{
-				LOG_INF("Moonlite TX %s", response.c_str());
+				LOG_INF("TX %s", response.c_str());
 				m_uart_handler.write(response);
 			}
 			else
 			{
-				LOG_DBG("Moonlite command produced no response");
+				LOG_DBG("command produced no response");
 			}
 
 			frame_log.clear();

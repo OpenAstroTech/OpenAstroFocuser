@@ -133,6 +133,7 @@ void Focuser::loop()
 
 void Focuser::stop()
 {
+	LOG_DBG("stop()");
 	const uint16_t actual16 = static_cast<uint16_t>(read_actual_position() & 0xFFFF);
 	{
 		MutexLock lock(m_state.lock);
@@ -148,6 +149,7 @@ void Focuser::stop()
 
 uint16_t Focuser::getCurrentPosition()
 {
+	LOG_DBG("getCurrentPosition()");
 	const int32_t actual = read_actual_position();
 	const uint16_t pos = static_cast<uint16_t>(actual & 0xFFFF);
 	{
@@ -160,6 +162,7 @@ uint16_t Focuser::getCurrentPosition()
 
 void Focuser::setCurrentPosition(uint16_t position)
 {
+	LOG_DBG("setCurrentPosition()");
 	int ret = m_stepper.set_reference_position(static_cast<int32_t>(position));
 	if (ret != 0)
 	{
@@ -176,6 +179,7 @@ void Focuser::setCurrentPosition(uint16_t position)
 
 uint16_t Focuser::getNewPosition()
 {
+	LOG_DBG("getNewPosition()");
 	MutexLock lock(m_state.lock);
 	LOG_DBG("getNewPosition -> 0x%04x (%u)", m_state.staged_position, m_state.staged_position);
 	return m_state.staged_position;
@@ -183,6 +187,7 @@ uint16_t Focuser::getNewPosition()
 
 void Focuser::setNewPosition(uint16_t position)
 {
+	LOG_DBG("setNewPosition()");
 	MutexLock lock(m_state.lock);
 	LOG_INF("setNewPosition 0x%04x (%u) (was 0x%04x)", position, position, m_state.staged_position);
 	m_state.staged_position = position;
@@ -190,6 +195,7 @@ void Focuser::setNewPosition(uint16_t position)
 
 void Focuser::goToNewPosition()
 {
+	LOG_DBG("goToNewPosition()");
 	uint16_t target;
 	{
 		MutexLock lock(m_state.lock);
@@ -204,6 +210,7 @@ void Focuser::goToNewPosition()
 
 bool Focuser::isHalfStep()
 {
+	LOG_DBG("isHalfStep()");
 	MutexLock lock(m_state.lock);
 	LOG_DBG("isHalfStep -> %s", m_state.half_step ? "true" : "false");
 	return m_state.half_step;
@@ -211,6 +218,7 @@ bool Focuser::isHalfStep()
 
 void Focuser::setHalfStep(bool enabled)
 {
+	LOG_DBG("setHalfStep()");
 	MutexLock lock(m_state.lock);
 	LOG_INF("setHalfStep %s (was %s)", enabled ? "true" : "false",
 		m_state.half_step ? "true" : "false");
@@ -219,6 +227,7 @@ void Focuser::setHalfStep(bool enabled)
 
 bool Focuser::isMoving()
 {
+	LOG_DBG("isMoving()");
 	bool moving = false;
 	int ret = m_stepper.is_moving(moving);
 	if (ret != 0)
@@ -232,12 +241,14 @@ bool Focuser::isMoving()
 
 std::string Focuser::getFirmwareVersion()
 {
+	LOG_DBG("getFirmwareVersion()");
 	LOG_DBG("getFirmwareVersion -> %s", kFirmwareVersion);
 	return std::string(kFirmwareVersion);
 }
 
 uint8_t Focuser::getSpeed()
 {
+	LOG_DBG("getSpeed()");
 	MutexLock lock(m_state.lock);
 	LOG_DBG("getSpeed -> 0x%02x (%u)", m_state.speed_multiplier, m_state.speed_multiplier);
 	return m_state.speed_multiplier;
@@ -245,6 +256,7 @@ uint8_t Focuser::getSpeed()
 
 void Focuser::setSpeed(uint8_t speed)
 {
+	LOG_DBG("setSpeed()");
 	if (speed == 0U)
 	{
 		speed = 1U;
@@ -262,12 +274,14 @@ void Focuser::setSpeed(uint8_t speed)
 
 uint16_t Focuser::getTemperature()
 {
+	LOG_DBG("getTemperature()");
 	LOG_DBG("getTemperature -> 0x0000 (0)");
 	return 0x0000;
 }
 
 uint8_t Focuser::getTemperatureCoefficientRaw()
 {
+	LOG_DBG("getTemperatureCoefficientRaw()");
 	MutexLock lock(m_state.lock);
 	LOG_DBG("getTemperatureCoefficientRaw -> 0x%02x (%d -> %.1f)",
 		static_cast<uint8_t>(m_state.temperature_coeff_times2),
