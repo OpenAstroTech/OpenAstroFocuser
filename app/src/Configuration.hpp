@@ -38,8 +38,8 @@ struct ThreadConfig
 	int priority;
 };
 
-inline constexpr ThreadConfig kFocuserThread{2048U, K_PRIO_PREEMPT(4)};
-inline constexpr ThreadConfig kSerialThread{2048U, K_PRIO_PREEMPT(5)};
+inline constexpr ThreadConfig kFocuserThread{CONFIG_FOCUSER_THREAD_STACK_SIZE, K_PRIO_PREEMPT(4)};
+inline constexpr ThreadConfig kSerialThread{CONFIG_SERIAL_THREAD_STACK_SIZE, K_PRIO_PREEMPT(5)};
 
 inline const struct device *console_device()
 {
