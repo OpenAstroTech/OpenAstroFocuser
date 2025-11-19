@@ -104,7 +104,7 @@ bool feed_frame(moonlite::Parser &parser, const char *frame, std::string &respon
 
 } // namespace
 
-ZTEST(moonlite_helpers, expected_payload_lengths)
+ZTEST(moonlite_helpers, test_expected_payload_lengths)
 {
 	zassert_equal(moonlite::expectedPayloadLength(moonlite::CommandType::set_current_position), 4,
 		"SP payload length");
@@ -114,7 +114,7 @@ ZTEST(moonlite_helpers, expected_payload_lengths)
 		"FQ payload length");
 }
 
-ZTEST(moonlite_helpers, opcode_and_hex_helpers)
+ZTEST(moonlite_helpers, test_opcode_and_hex_helpers)
 {
 	zassert_equal(moonlite::strToCommandType("GP"), moonlite::CommandType::get_current_position,
 		"GP opcode decode");
@@ -129,7 +129,7 @@ ZTEST(moonlite_helpers, opcode_and_hex_helpers)
 	zassert_equal(moonlite::parseHex4("7fff"), 0x7FFF, "parseHex4 lowercase");
 }
 
-ZTEST(moonlite_parser, handles_query_commands)
+ZTEST(moonlite_parser, test_handles_query_commands)
 {
 	TestHandler handler;
 	handler.half_step = true;
@@ -167,7 +167,7 @@ ZTEST(moonlite_parser, handles_query_commands)
 	zassert_equal(response, std::string("EF#"), "GC response");
 }
 
-ZTEST(moonlite_parser, handles_state_changing_commands)
+ZTEST(moonlite_parser, test_handles_state_changing_commands)
 {
 	TestHandler handler;
 	moonlite::Parser parser(handler);
@@ -196,7 +196,7 @@ ZTEST(moonlite_parser, handles_state_changing_commands)
 	zassert_true(handler.stop_called, "FQ stopped focuser");
 }
 
-ZTEST(moonlite_parser, rejects_invalid_payload)
+ZTEST(moonlite_parser, test_rejects_invalid_payload)
 {
 	TestHandler handler;
 	moonlite::Parser parser(handler);
