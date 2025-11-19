@@ -33,7 +33,7 @@ jobs:
         uses: zephyrproject-rtos/action-zephyr-setup@v1
         with:
           app-path: OpenAstroFocuser
-          toolchains: hal_espressif
+          toolchains: arm-zephyr-eabi:xtensa-espressif_esp32s3_zephyr-elf
           ccache-cache-key: ${{ matrix.os }}
 
       - name: Build firmware
