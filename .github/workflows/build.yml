@@ -24,7 +24,13 @@ jobs:
           path: OpenAstroFocuser
           persist-credentials: false
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+
       - name: Install system dependencies
+        shell: bash
         run: |
           if [ "${{ runner.os }}" = "Linux" ]; then
             sudo rm -f /var/lib/man-db/auto-update
@@ -39,11 +45,6 @@ jobs:
             choco feature enable -n allowGlobalConfirmation
             choco install ninja wget gperf
           fi
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.12
 
       - name: Install west
         run: |
