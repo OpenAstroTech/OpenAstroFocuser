@@ -1,0 +1,26 @@
+# Copyright (c) 2021 Nordic Semiconductor ASA
+# SPDX-License-Identifier: Apache-2.0
+
+manifest:
+  self:
+    west-commands: scripts/west-commands.yml
+
+  remotes:
+    - name: andre-stefanov
+      url-base: https://github.com/andre-stefanov
+    - name: jilaypandya
+      url-base: https://github.com/jilaypandya
+    - name: zephyrproject-rtos
+      url-base: https://github.com/zephyrproject-rtos
+
+  projects:
+    - name: zephyr
+      remote: andre-stefanov
+      revision: feature/introduce-step-dir-functions
+      import:
+        # By using name-allowlist we can clone only the modules that are
+        # strictly needed by the application.
+        name-allowlist:
+          - cmsis_6    # required by the ARM port for Cortex-M
+          - hal_nordic # required by the custom_plank board (Nordic based)
+          - hal_espressif # required by the esp32_devkitc_procpu board (Espressif based)

@@ -1,0 +1,16 @@
+# This file is provided so that the application can be compiled using Twister,
+# the Zephyr testing tool. In this file, multiple combinations can be specified,
+# so that you can easily test all of them locally or in CI.
+sample:
+  description: OpenAstroFocuser firmware
+  name: OpenAstroFocuser
+common:
+  build_only: true
+  integration_platforms:
+    - esp32s3_devkitc/esp32s3/procpu
+    - qemu_cortex_m0
+tests:
+  app.default: {}
+  app.debug:
+    extra_overlay_confs:
+      - debug.conf

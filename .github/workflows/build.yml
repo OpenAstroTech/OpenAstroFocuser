@@ -1,0 +1,82 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build app and tests
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, macos-26, windows-2022]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: OpenAstroFocuser
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+
+      - name: Install system dependencies
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            sudo rm -f /var/lib/man-db/auto-update
+            sudo apt-get update -y
+            sudo apt-get install -y ninja-build ccache gperf
+            if [ "${{ runner.arch }}" = "X64" ]; then
+              sudo apt-get install -y libc6-dev-i386 g++-multilib
+            fi
+          elif [ "${{ runner.os }}" = "macOS" ]; then
+            brew install ninja ccache qemu dtc gperf
+          elif [ "${{ runner.os }}" = "Windows" ]; then
+            choco feature enable -n allowGlobalConfirmation
+            choco install ninja wget gperf
+          fi
+
+      - name: Install west
+        run: |
+          pip install west
+
+      - name: Initialize Zephyr workspace
+        run: |
+          west init -l OpenAstroFocuser
+          west update
+
+      - name: Install pip dependencies
+        run: |
+          west packages pip --install --ignore-venv-check || pip3 install -r zephyr/scripts/requirements.txt
+
+      - name: Install Zephyr SDK
+        run: |
+          west sdk install -t arm-zephyr-eabi xtensa-espressif_esp32s3_zephyr-elf
+
+      - name: Build firmware
+        working-directory: OpenAstroFocuser
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            EXTRA_TWISTER_FLAGS="--short-build-path -O/tmp/twister-out"
+          fi
+          west twister -T app -v --inline-logs --integration $EXTRA_TWISTER_FLAGS
+
+      - name: Twister Tests
+        working-directory: OpenAstroFocuser
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            EXTRA_TWISTER_FLAGS="--short-build-path -O/tmp/twister-out"
+          fi
+          west twister -T tests -v --inline-logs --integration $EXTRA_TWISTER_FLAGS

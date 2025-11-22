@@ -1,0 +1,7 @@
+common:
+  tags: moonlite
+  platform_allow: qemu_cortex_m0
+  integration_platforms:
+    - qemu_cortex_m0
+tests:
+  lib.moonlite: {}

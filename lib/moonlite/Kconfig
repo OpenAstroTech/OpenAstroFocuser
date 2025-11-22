@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: Apache-2.0
+
+config MOONLITE
+	bool "Moonlite serial protocol helpers"
+	default y
+	help
+	  Enable the Moonlite focuser serial protocol helper library, which
+	  provides the command parser, command enumeration, and handler interface
+	  used by the focuser firmware implementation.
