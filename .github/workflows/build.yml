@@ -35,7 +35,7 @@ jobs:
 
       - name: Initialize Zephyr workspace
         run: |
-          west init -l OpenAstroFocuser .
+          west init -l OpenAstroFocuser
           west update
 
       - name: Install pip dependencies
