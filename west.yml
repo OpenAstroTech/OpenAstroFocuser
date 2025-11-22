@@ -15,7 +15,7 @@ manifest:
 
   projects:
     - name: zephyr
-      remote: jilaypandya
+      remote: andre-stefanov
       revision: feature/introduce-step-dir-functions
       import:
         # By using name-allowlist we can clone only the modules that are

@@ -3,24 +3,24 @@
  *
  * Devicetree overlay enabling the Moonlite focuser firmware on the
  * qemu_cortex_m0 board. The design uses the generic GPIO H-bridge stepper
- * controller so the application can run entirely in the simulator.
+ * controller for motion ("stepper" alias) plus the Zephyr fake stepper
+ * driver ("stepper-drv" alias) so the application can exercise the driver
+ * enable path under simulation.
  */
 
 / {
 	aliases {
 		stepper = &focuser_stepper;
-		stepper-drv = &focuser_stepper;
+		stepper-drv = &focuser_stepper_drv;
+	};
+
+	focuser_stepper_drv: focuser_stepper_drv {
+		compatible = "zephyr,fake-stepper-driver";
+		status = "okay";
 	};
 
 	focuser_stepper: focuser_stepper {
-		compatible = "zephyr,h-bridge-stepper";
-		/* Four phase outputs feeding a simulated H-bridge. */
-		gpios = <&gpio0 1 GPIO_ACTIVE_HIGH>,
-			<&gpio0 2 GPIO_ACTIVE_HIGH>,
-			<&gpio0 3 GPIO_ACTIVE_HIGH>,
-			<&gpio0 4 GPIO_ACTIVE_HIGH>;
-		en-gpios = <&gpio0 0 GPIO_ACTIVE_HIGH>;
-		micro-step-res = <1>;
+		compatible = "zephyr,fake-stepper-controller";
 		status = "okay";
 	};
 
