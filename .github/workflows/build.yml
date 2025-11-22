@@ -27,15 +27,9 @@ jobs:
         run: |
           pip install west
 
-      - name: Set up git credentials
-        run: |
-          git config --global url."https://${{ secrets.GITHUB_TOKEN }}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Initialize Zephyr workspace
         run: |
-          west init -m $GITHUB_SERVER_URL/$GITHUB_REPOSITORY --mr $GITHUB_REF_NAME .
+          west init -m "https://${{ secrets.GITHUB_TOKEN }}:x-oauth-basic@github.com/${{ github.repository }}" --mr $GITHUB_REF_NAME .
           west update
 
       - name: Install Zephyr SDK
