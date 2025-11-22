@@ -18,6 +18,12 @@ jobs:
         os: [ubuntu-22.04, macos-26, windows-2022]
     runs-on: ${{ matrix.os }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: OpenAstroFocuser
+          persist-credentials: false
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -29,8 +35,12 @@ jobs:
 
       - name: Initialize Zephyr workspace
         run: |
-          west init -m "https://${{ secrets.GITHUB_TOKEN }}:x-oauth-basic@github.com/${{ github.repository }}" --mr $GITHUB_REF_NAME .
+          west init -l OpenAstroFocuser .
           west update
+
+      - name: Install pip dependencies
+        run: |
+          west packages pip --install --ignore-venv-check || pip3 install -r zephyr/scripts/requirements.txt
 
       - name: Install Zephyr SDK
         run: |
