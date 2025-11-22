@@ -174,8 +174,6 @@ Distributed under the Apache License 2.0. See `LICENSE` for details.
 
 Project Link: [https://github.com/OpenAstroTech/OpenAstroFocuser](https://github.com/OpenAstroTech/OpenAstroFocuser)
 
-Zephyr Discord: `#moonlite-focuser`
-
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Acknowledgments
