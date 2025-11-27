@@ -23,10 +23,10 @@ LOG_MODULE_REGISTER(focuser, CONFIG_APP_LOG_LEVEL);
 namespace
 {
 
-	ZephyrFocuserStepper g_stepper_adapter(config::stepper, config::stepper_drv);
+	ZephyrFocuserStepper g_stepper_adapter(config::devices::stepper, config::devices::stepper_drv);
 	Focuser g_focuser(g_stepper_adapter);
 	FocuserThread g_focuser_thread(g_focuser);
-	UartHandler g_uart_handler(config::uart);
+	UartHandler g_uart_handler(config::devices::uart);
 	UartThread g_uart_thread(g_focuser, g_uart_handler);
 
 } // namespace
@@ -35,7 +35,7 @@ int main(void)
 {
 	LOG_INF("Moonlite focuser firmware %s", APP_VERSION_STRING);
 
-	if (!device_is_ready(config::uart))
+	if (!device_is_ready(config::devices::uart))
 	{
 		LOG_ERR("UART handler device not ready");
 		return -ENODEV;
@@ -57,7 +57,7 @@ int main(void)
 
 	g_focuser_thread.start();
 
-	g_uart_thread.start(config::kSerialThread.priority);
+	g_uart_thread.start();
 
 	LOG_INF("Moonlite focuser ready: UART 9600 8N1");
 

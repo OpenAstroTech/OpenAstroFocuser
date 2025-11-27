@@ -1,27 +1,23 @@
 #pragma once
 
-#include <zephyr/kernel.h>
-
 #include <Moonlite.hpp>
 
-#include "Configuration.hpp"
+#include "Thread.hpp"
 
 class Focuser;
 class UartHandler;
 
-class UartThread {
+class UartThread : public Thread {
 public:
 	UartThread(Focuser &focuser, UartHandler &uart_handler);
 
-	void start(int priority);
+	void start();
 
 private:
-	static void thread_entry(void *, void *, void *);
-	void run();
+	void run() override;
 
 	static constexpr std::size_t kMaxLoggedFrameLen = 80U;
 
 	moonlite::Parser m_parser;
 	UartHandler &m_uart_handler;
-	k_thread m_thread;
 };
