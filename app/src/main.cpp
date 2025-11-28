@@ -24,7 +24,7 @@ namespace
 {
 
 	ZephyrFocuserStepper g_stepper_adapter(config::devices::stepper, config::devices::stepper_drv);
-	Focuser g_focuser(g_stepper_adapter);
+	Focuser g_focuser(g_stepper_adapter, config::version);
 	FocuserThread g_focuser_thread(g_focuser);
 	UartHandler g_uart_handler(config::devices::uart);
 	UartThread g_uart_thread(g_focuser, g_uart_handler);

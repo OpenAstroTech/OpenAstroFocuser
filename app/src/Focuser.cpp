@@ -2,17 +2,12 @@
 
 #include <zephyr/logging/log.h>
 
-#include <app_version.h>
-
 #include <errno.h>
 
 LOG_MODULE_DECLARE(focuser, CONFIG_APP_LOG_LEVEL);
 
 namespace
 {
-
-	constexpr const char kFirmwareVersion[] = STRINGIFY(APP_VERSION_MAJOR) STRINGIFY(APP_VERSION_MINOR);
-
 	uint32_t compute_step_period_us(uint8_t multiplier)
 	{
 		uint32_t m = (multiplier == 0U) ? 1U : static_cast<uint32_t>(multiplier);
@@ -27,8 +22,8 @@ namespace
 
 } // namespace
 
-Focuser::Focuser(FocuserStepper &stepper)
-	: m_stepper(stepper)
+Focuser::Focuser(FocuserStepper &stepper, const char *firmware_version)
+	: m_firmware_version(firmware_version), m_stepper(stepper)
 {
 	(void)set_stepper_driver_enabled(true);
 }
@@ -242,8 +237,8 @@ bool Focuser::isMoving()
 std::string Focuser::getFirmwareVersion()
 {
 	LOG_DBG("getFirmwareVersion()");
-	LOG_DBG("getFirmwareVersion -> %s", kFirmwareVersion);
-	return std::string(kFirmwareVersion);
+	LOG_DBG("getFirmwareVersion -> %s", m_firmware_version);
+	return std::string(m_firmware_version);
 }
 
 uint8_t Focuser::getSpeed()

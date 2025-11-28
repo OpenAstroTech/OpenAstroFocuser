@@ -25,6 +25,7 @@ namespace
 
 const struct device *const k_stepper_controller = DEVICE_DT_GET(DT_ALIAS(stepper));
 const struct device *const k_stepper_driver = DEVICE_DT_GET(DT_ALIAS(stepper_drv));
+constexpr char kFirmwareVersion[] = "twister-test";
 
 void assert_stepper_devices_ready()
 {
@@ -92,7 +93,7 @@ ZTEST(focuser_app, test_initialise_requires_ready_stepper)
 	assert_stepper_devices_ready();
 	ZephyrFocuserStepper hw_stepper(k_stepper_controller, k_stepper_driver);
 	ReadyOverrideStepper stepper(hw_stepper, false);
-	Focuser focuser(stepper);
+	Focuser focuser(stepper, kFirmwareVersion);
 
 	const int ret = focuser.initialise();
 
@@ -109,7 +110,7 @@ ZTEST(focuser_app, test_initialise_configures_stepper_when_ready)
 {
 	assert_stepper_devices_ready();
 	ZephyrFocuserStepper stepper(k_stepper_controller, k_stepper_driver);
-	Focuser focuser(stepper);
+	Focuser focuser(stepper, kFirmwareVersion);
 
 	const int ret = focuser.initialise();
 
@@ -132,7 +133,7 @@ ZTEST(focuser_app, test_set_speed_clamps_to_minimum_and_updates_interval)
 {
 	assert_stepper_devices_ready();
 	ZephyrFocuserStepper stepper(k_stepper_controller, k_stepper_driver);
-	Focuser focuser(stepper);
+	Focuser focuser(stepper, kFirmwareVersion);
 	zassert_ok(focuser.initialise(), "initialise precondition");
 
 	const unsigned int initial_microstep_calls =
@@ -157,7 +158,7 @@ ZTEST(focuser_app, test_stop_stops_motion_and_disables_driver)
 {
 	assert_stepper_devices_ready();
 	ZephyrFocuserStepper stepper(k_stepper_controller, k_stepper_driver);
-	Focuser focuser(stepper);
+	Focuser focuser(stepper, kFirmwareVersion);
 	zassert_ok(focuser.initialise(), "initialise precondition");
 
 	const unsigned int initial_stop_calls = fake_stepper_stop_fake.call_count;
@@ -187,7 +188,7 @@ ZTEST(focuser_app, test_initialise_ignores_ealready_from_driver)
 {
 	assert_stepper_devices_ready();
 	ZephyrFocuserStepper stepper(k_stepper_controller, k_stepper_driver);
-	Focuser focuser(stepper);
+	Focuser focuser(stepper, kFirmwareVersion);
 
 	int enable_results[] = {-EALREADY, -EALREADY};
 	SET_RETURN_SEQ(fake_stepper_drv_enable, enable_results, 2);
