@@ -30,7 +30,7 @@ jobs:
           python-version: 3.12
 
       - name: Setup Zephyr project
-        uses: actions/setup-zephyr
+        uses: ./.github/actions/setup-zephyr
         with:
           app-path: example-application
           toolchains: arm-zephyr-eabi,xtensa-espressif_esp32s3_zephyr-elf
