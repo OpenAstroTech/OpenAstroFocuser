@@ -5,37 +5,26 @@
 #include <cstdint>
 #include <string>
 
+#include "Configuration.hpp"
 #include "Focuser.hpp"
 #include "UartHandler.hpp"
 
 LOG_MODULE_REGISTER(uart_thread, CONFIG_APP_LOG_LEVEL);
 
-namespace
-{
-K_THREAD_STACK_DEFINE(serial_stack, config::kSerialThread.stack_size);
-}
-
 UartThread::UartThread(Focuser &focuser, UartHandler &uart_handler)
-	: m_parser(focuser), m_uart_handler(uart_handler)
+	: Thread(config::threads::serial_stack,
+		 K_THREAD_STACK_SIZEOF(config::threads::serial_stack),
+		 config::threads::serial_priority, "uart"),
+	  m_parser(focuser), m_uart_handler(uart_handler)
 {
 }
 
-void UartThread::start(int priority)
+void UartThread::start()
 {
-	k_thread_create(&m_thread, serial_stack, K_THREAD_STACK_SIZEOF(serial_stack),
-			thread_entry, this, nullptr, nullptr, priority, 0, K_NO_WAIT);
-	k_thread_name_set(&m_thread, "serial");
-}
-
-void UartThread::thread_entry(void *arg1, void *, void *)
-{
-	auto *self = static_cast<UartThread *>(arg1);
-	if (self == nullptr)
+	if (!start_thread())
 	{
-		return;
+		LOG_ERR("Failed to start UART thread");
 	}
-
-	self->run();
 }
 
 void UartThread::run()

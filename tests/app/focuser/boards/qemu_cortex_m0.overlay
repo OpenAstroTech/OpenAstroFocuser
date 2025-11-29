@@ -1,11 +1,5 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
- *
- * Devicetree overlay enabling the Moonlite focuser firmware on the
- * qemu_cortex_m0 board. The design uses the generic GPIO H-bridge stepper
- * controller for motion ("stepper" alias) plus the Zephyr fake stepper
- * driver ("stepper-drv" alias) so the application can exercise the driver
- * enable path under simulation.
  */
 
 / {

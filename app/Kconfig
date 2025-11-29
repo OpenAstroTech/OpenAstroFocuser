@@ -12,18 +12,6 @@ endmenu
 
 menu "OpenAstroFocuser options"
 
-config FOCUSER_THREAD_STACK_SIZE
-	int "Focuser thread stack size"
-	default 2048
-	help
-	  Stack allocation used by the focuser control thread.
-
-config SERIAL_THREAD_STACK_SIZE
-	int "Serial thread stack size"
-	default 2048
-	help
-	  Stack allocation used by the Moonlite UART handler thread.
-
 endmenu
 
 module = APP
