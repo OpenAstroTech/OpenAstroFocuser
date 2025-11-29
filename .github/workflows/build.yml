@@ -33,7 +33,7 @@ jobs:
         uses: ./OpenAstroFocuser/.github/actions/setup-zephyr
         with:
           app-path: OpenAstroFocuser
-          toolchains: arm-zephyr-eabi,xtensa-espressif_esp32s3_zephyr-elf
+          toolchains: arm-zephyr-eabi:xtensa-espressif_esp32s3_zephyr-elf
           ccache-cache-key: ${{ matrix.os }}
 
       - name: Build firmware
