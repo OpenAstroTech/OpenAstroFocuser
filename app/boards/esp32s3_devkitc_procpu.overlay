@@ -51,7 +51,7 @@
 
 /**
 * Moonlite focuser control UART configuration.
-* Used for
+* Used for logging and console output.
 */
 &uart1 {
 	status = "okay";
