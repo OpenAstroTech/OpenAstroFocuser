@@ -18,9 +18,6 @@
 		status = "okay";
 	};
 
-	zephyr,user {
-		uart_handler = <&uart0>;
-	};
 };
 
 &uart0 {
