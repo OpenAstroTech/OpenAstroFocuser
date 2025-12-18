@@ -15,15 +15,6 @@
 
   <p align="center">
     Moonlite-compatible focuser firmware built on Zephyr RTOS.
-    <br />
-    <a href="https://openastrotech.github.io/OpenAstroFocuser"><strong>Explore the docs »</strong></a>
-    <br />
-    <br />
-    <a href="https://github.com/OpenAstroTech/OpenAstroFocuser">View Demo</a>
-    ·
-    <a href="https://github.com/OpenAstroTech/OpenAstroFocuser/issues/new?labels=bug&template=bug-report---.md">Report Bug</a>
-    ·
-    <a href="https://github.com/OpenAstroTech/OpenAstroFocuser/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>
   </p>
 </div>
 
@@ -71,7 +62,6 @@ Every release follows Zephyr `main`, so you always know which toolchain and modu
 * [![Zephyr][Zephyr.io]][Zephyr-url]
 * [![CMake][CMake]][CMake-url]
 * [![C++20][Cpp]][Cpp-url]
-* [![ESP-IDF][Espidf]][Espidf-url]
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
