@@ -9,6 +9,12 @@ on:
 permissions:
   contents: read
 
+env:
+  ZEPHYR_SDK_VERSION: 0.17.4
+  ZEPHYR_TOOLCHAINS: |
+    arm-zephyr-eabi
+    xtensa-espressif_esp32s3_zephyr-elf
+
 jobs:
   build:
     name: Build app and tests
@@ -25,9 +31,10 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: 3.12
+          cache: "pip"
 
       - name: Install system dependencies
         shell: bash
@@ -47,21 +54,34 @@ jobs:
           fi
 
       - name: Install west
+        shell: bash
         run: |
           pip install west
 
       - name: Initialize Zephyr workspace
+        shell: bash
         run: |
           west init -l OpenAstroFocuser
           west update
 
       - name: Install pip dependencies
+        shell: bash
         run: |
           west packages pip --install --ignore-venv-check || pip3 install -r zephyr/scripts/requirements.txt
 
+      - name: Zephyr SDK cache
+        id: cache
+        uses: actions/cache@v5
+        with:
+          path: ~/zephyr-sdk-${{ env.ZEPHYR_SDK_VERSION }}
+          key: zephyr-sdk-${{ env.ZEPHYR_SDK_VERSION }}-${{ matrix.os }}
+
       - name: Install Zephyr SDK
+        if: steps.cache.outputs.cache-hit != 'true'
+        shell: bash
         run: |
-          west sdk install -t arm-zephyr-eabi xtensa-espressif_esp32s3_zephyr-elf
+          TOOLCHAINS="$(echo "${{ env.ZEPHYR_TOOLCHAINS }}" | xargs)"
+          west sdk install --version ${{ env.ZEPHYR_SDK_VERSION }} -t ${TOOLCHAINS}
 
       - name: Build firmware
         working-directory: OpenAstroFocuser

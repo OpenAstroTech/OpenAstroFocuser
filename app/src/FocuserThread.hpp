@@ -1,24 +1,17 @@
 #pragma once
 
-#include <zephyr/kernel.h>
-
-#include <cstddef>
-
-#include "Configuration.hpp"
+#include "Thread.hpp"
 
 class Focuser;
 
-class FocuserThread {
+class FocuserThread : public Thread {
 public:
 	explicit FocuserThread(Focuser &focuser);
 
 	void start();
 
 private:
-	static void thread_entry(void *, void *, void *);
-	void run();
+	void run() override;
 
 	Focuser &m_focuser;
-	k_thread_stack_t m_stack[K_THREAD_STACK_LEN(config::kFocuserThread.stack_size)];
-	struct k_thread m_thread;
 };

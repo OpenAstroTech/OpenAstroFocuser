@@ -4,17 +4,25 @@
  */
 
 /* Devicetree overlay enabling the Moonlite focuser firmware on ESP32-S3 DevKitC
- * (PROCPU). The zephyr,gpio-step-dir-controller drives the step/dir pins
- * referenced by the "stepper" alias, while the dedicated TMC2209 device is
- * referenced by the "stepper-drv" alias so the application can toggle the
- * external driver rails. The zephyr,user node supplies the UART phandle
- * consumed by the application.
+ * (PROCPU). Device configuration is performed using chosen nodes:
+ *   - focuser,uart: selects the UART device for the focuser console
+ *   - focuser,stepper: selects the step/dir controller for the stepper motor
+ *   - focuser,stepper-drv: selects the TMC2209 stepper driver device
+ * These chosen nodes are used by the application to access the appropriate hardware.
  */
 
 / {
-	aliases {
-		stepper = &focuser_stepper;
-		stepper-drv = &focuser_stepper_drv;
+	chosen {
+		zephyr,console = &uart1;
+		zephyr,log-uart = &focuser_log_uarts;
+		focuser,uart = &uart0;
+		focuser,stepper = &focuser_stepper;
+		focuser,stepper-drv = &focuser_stepper_drv;
+	};
+
+	focuser_log_uarts: focuser_log_uarts {
+		compatible = "zephyr,log-uart";
+		uarts = <&uart1>;
 	};
 
 	focuser_stepper_drv: focuser_stepper_drv {
@@ -31,16 +39,20 @@
 		step-width-ns = <10000>;
 		status = "okay";
 	};
-
-	zephyr,user {
-		uart_handler = <&uart1>;
-	};
 };
 
+/**
+* Moonlite focuser console UART configuration
+*/
 &uart0 {
 	current-speed = <9600>;
+	status = "okay";
 };
 
+/**
+* Moonlite focuser control UART configuration.
+* Used for logging and console output.
+*/
 &uart1 {
 	status = "okay";
 	current-speed = <9600>;
@@ -48,6 +60,9 @@
 	pinctrl-names = "default";
 };
 
+/**
+* Pin control settings
+*/
 &pinctrl {
 	moonlite_uart1_default: moonlite_uart1_default {
 		group1 {
