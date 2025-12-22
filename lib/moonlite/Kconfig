@@ -2,7 +2,7 @@
 
 config MOONLITE
 	bool "Moonlite serial protocol helpers"
-	default y
+	default n
 	help
 	  Enable the Moonlite focuser serial protocol helper library, which
 	  provides the command parser, command enumeration, and handler interface

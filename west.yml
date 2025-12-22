@@ -24,3 +24,5 @@ manifest:
           - cmsis_6    # required by the ARM port for Cortex-M
           - hal_nordic # required by the custom_plank board (Nordic based)
           - hal_espressif # required by the esp32_devkitc_procpu board (Espressif based)
+          - mbedtls    # required for MCUboot RSA signature verification
+          - mcuboot    # MCUboot bootloader module
