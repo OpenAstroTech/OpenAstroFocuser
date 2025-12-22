@@ -132,8 +132,10 @@ ZTEST(focuser_app, test_initialise_requires_ready_stepper)
 		"should not set reference position on failure");
 	zassert_equal(fake_stepper_set_microstep_interval_fake.call_count, 0U,
 		"should not update step interval on failure");
-	zassert_equal(fake_stepper_drv_enable_fake.call_count, 1U,
-		"only constructor enable should run");
+	zassert_equal(fake_stepper_drv_enable_fake.call_count, 0U,
+		"driver should not be enabled during startup");
+	zassert_equal(fake_stepper_drv_disable_fake.call_count, 0U,
+		"driver should not be touched when hardware is not ready");
 }
 
 ZTEST(focuser_app, test_initialise_configures_stepper_when_ready)
@@ -153,10 +155,10 @@ ZTEST(focuser_app, test_initialise_configures_stepper_when_ready)
 		"step interval should be applied once");
 	zassert_equal(fake_stepper_set_microstep_interval_fake.arg1_val, 500000ULL,
 		"default speed uses 500us interval");
-	zassert_equal(fake_stepper_drv_enable_fake.call_count, 2U,
-		"constructor plus initialise enable calls expected");
-	zassert_equal(fake_stepper_drv_disable_fake.call_count, 0U,
-		"driver should remain enabled after init");
+	zassert_equal(fake_stepper_drv_enable_fake.call_count, 0U,
+		"driver should not be enabled during init");
+	zassert_equal(fake_stepper_drv_disable_fake.call_count, 1U,
+		"initialise should ensure the driver starts disabled");
 }
 
 ZTEST(focuser_app, test_initialise_restores_position_from_store)
@@ -260,14 +262,16 @@ ZTEST(focuser_app, test_initialise_ignores_ealready_from_driver)
 	ZephyrFocuserStepper stepper(k_stepper_controller, k_stepper_driver);
 	Focuser focuser(stepper, nullptr, kFirmwareVersion);
 
-	int enable_results[] = {-EALREADY, -EALREADY};
-	SET_RETURN_SEQ(fake_stepper_drv_enable, enable_results, 2);
+	int disable_results[] = {-EALREADY};
+	SET_RETURN_SEQ(fake_stepper_drv_disable, disable_results, 1);
 
 	const int ret = focuser.initialise();
 
 	zassert_equal(ret, 0, "-EALREADY responses should not fail init");
-	zassert_equal(fake_stepper_drv_enable_fake.call_count, 2U,
-		"two enable attempts should have occurred");
+	zassert_equal(fake_stepper_drv_disable_fake.call_count, 1U,
+		"initialise should attempt to disable the driver once");
+	zassert_equal(fake_stepper_drv_enable_fake.call_count, 0U,
+		"initialise should not enable the driver");
 }
 
 ZTEST(focuser_app, test_eeprom_position_store_roundtrip)

@@ -25,7 +25,9 @@ namespace
 Focuser::Focuser(FocuserStepper &stepper, PositionStore *store, const char *firmware_version)
 	: m_firmware_version(firmware_version), m_stepper(stepper), m_store(store)
 {
-	(void)set_stepper_driver_enabled(true);
+	/* Do not touch hardware here; start with the stepper driver disabled.
+	 * The driver is enabled only for the duration of motion.
+	 */
 }
 
 int Focuser::initialise()
@@ -37,7 +39,8 @@ int Focuser::initialise()
 		return -ENODEV;
 	}
 
-	int ret = set_stepper_driver_enabled(true);
+	/* Ensure the stepper driver starts disabled; it will be enabled during motion only. */
+	int ret = set_stepper_driver_enabled(false);
 	if (ret != 0)
 	{
 		return ret;
@@ -284,13 +287,15 @@ void Focuser::move_to(uint16_t target)
 		interval_ns = m_state.step_interval_ns;
 	}
 
-	if (set_stepper_driver_enabled(true) != 0)
+	const bool enabled_for_move = (set_stepper_driver_enabled(true) == 0);
+	if (!enabled_for_move)
 	{
 		return;
 	}
 
 	if (apply_step_interval(interval_ns) != 0)
 	{
+		(void)set_stepper_driver_enabled(false);
 		return;
 	}
 
@@ -298,6 +303,7 @@ void Focuser::move_to(uint16_t target)
 	if (ret != 0)
 	{
 		LOG_ERR("Failed to start move to 0x%04x (%d)", target, ret);
+		(void)set_stepper_driver_enabled(false);
 		return;
 	}
 
