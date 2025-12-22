@@ -7,6 +7,7 @@ set(APP_ROOT ${CMAKE_CURRENT_LIST_DIR}/../../..)
 target_sources(app PRIVATE
   src/main.cpp
   ${APP_ROOT}/app/src/Focuser.cpp
+  ${APP_ROOT}/app/src/EepromPositionStore.cpp
   ${APP_ROOT}/app/src/ZephyrStepper.cpp
 )
 

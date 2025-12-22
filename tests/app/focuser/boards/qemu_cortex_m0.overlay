@@ -6,6 +6,13 @@
 	aliases {
 		stepper = &focuser_stepper;
 		stepper-drv = &focuser_stepper_drv;
+		eeprom-0 = &fake_eeprom;
+	};
+
+	fake_eeprom: fake_eeprom {
+		compatible = "zephyr,fake-eeprom";
+		status = "okay";
+		size = <32>;
 	};
 
 	focuser_stepper_drv: focuser_stepper_drv {

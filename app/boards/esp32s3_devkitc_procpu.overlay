@@ -12,12 +12,27 @@
  */
 
 / {
+	aliases {
+		eeprom-0 = &eeprom0;
+	};
+
 	chosen {
 		zephyr,console = &uart1;
 		zephyr,log-uart = &focuser_log_uarts;
 		focuser,uart = &uart0;
 		focuser,stepper = &focuser_stepper;
 		focuser,stepper-drv = &focuser_stepper_drv;
+	};
+
+	eeprom0: eeprom@0 {
+		compatible = "zephyr,emu-eeprom";
+		label = "focuser-eeprom";
+		reg = <0x0 0x20>;
+		size = <32>;
+		pagesize = <0x1000>;
+		partition = <&storage_partition>;
+		rambuf;
+		status = "okay";
 	};
 
 	focuser_log_uarts: focuser_log_uarts {

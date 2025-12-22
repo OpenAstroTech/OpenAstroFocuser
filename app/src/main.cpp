@@ -12,6 +12,7 @@
 #include <errno.h>
 
 #include "Configuration.hpp"
+#include "EepromPositionStore.hpp"
 #include "Focuser.hpp"
 #include "FocuserThread.hpp"
 #include "UartHandler.hpp"
@@ -23,8 +24,9 @@ LOG_MODULE_REGISTER(focuser, CONFIG_APP_LOG_LEVEL);
 namespace
 {
 
+	EepromPositionStore g_position_store;
 	ZephyrFocuserStepper g_stepper_adapter(config::devices::stepper, config::devices::stepper_drv);
-	Focuser g_focuser(g_stepper_adapter, config::version);
+	Focuser g_focuser(g_stepper_adapter, &g_position_store, config::version);
 	FocuserThread g_focuser_thread(g_focuser);
 	UartHandler g_uart_handler(config::devices::uart);
 	UartThread g_uart_thread(g_focuser, g_uart_handler);

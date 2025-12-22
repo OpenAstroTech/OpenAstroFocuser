@@ -4,12 +4,15 @@
 #include <errno.h>
 
 #include <cstdint>
+#include <cstring>
 
 #include <zephyr/device.h>
+#include <zephyr/drivers/eeprom/eeprom_fake.h>
 #include <zephyr/drivers/stepper/stepper_fake.h>
 #include <zephyr/logging/log.h>
 
 #include "Focuser.hpp"
+#include "EepromPositionStore.hpp"
 #include "ZephyrStepper.hpp"
 
 #ifndef CONFIG_APP_LOG_LEVEL
@@ -26,6 +29,33 @@ namespace
 const struct device *const k_stepper_controller = DEVICE_DT_GET(DT_ALIAS(stepper));
 const struct device *const k_stepper_driver = DEVICE_DT_GET(DT_ALIAS(stepper_drv));
 constexpr char kFirmwareVersion[] = "twister-test";
+
+class MockPositionStore final : public PositionStore
+{
+public:
+	bool load(uint16_t &position_out) override
+	{
+		++load_calls;
+		if (!has_value)
+		{
+			return false;
+		}
+		position_out = value;
+		return true;
+	}
+
+	void save(uint16_t position) override
+	{
+		++save_calls;
+		last_saved = position;
+	}
+
+	bool has_value{false};
+	uint16_t value{0U};
+	unsigned int load_calls{0U};
+	unsigned int save_calls{0U};
+	uint16_t last_saved{0U};
+};
 
 void assert_stepper_devices_ready()
 {
@@ -93,7 +123,7 @@ ZTEST(focuser_app, test_initialise_requires_ready_stepper)
 	assert_stepper_devices_ready();
 	ZephyrFocuserStepper hw_stepper(k_stepper_controller, k_stepper_driver);
 	ReadyOverrideStepper stepper(hw_stepper, false);
-	Focuser focuser(stepper, kFirmwareVersion);
+	Focuser focuser(stepper, nullptr, kFirmwareVersion);
 
 	const int ret = focuser.initialise();
 
@@ -110,7 +140,7 @@ ZTEST(focuser_app, test_initialise_configures_stepper_when_ready)
 {
 	assert_stepper_devices_ready();
 	ZephyrFocuserStepper stepper(k_stepper_controller, k_stepper_driver);
-	Focuser focuser(stepper, kFirmwareVersion);
+	Focuser focuser(stepper, nullptr, kFirmwareVersion);
 
 	const int ret = focuser.initialise();
 
@@ -129,11 +159,48 @@ ZTEST(focuser_app, test_initialise_configures_stepper_when_ready)
 		"driver should remain enabled after init");
 }
 
+ZTEST(focuser_app, test_initialise_restores_position_from_store)
+{
+	assert_stepper_devices_ready();
+	ZephyrFocuserStepper stepper(k_stepper_controller, k_stepper_driver);
+	MockPositionStore store;
+	store.has_value = true;
+	store.value = 0x1234;
+	Focuser focuser(stepper, &store, kFirmwareVersion);
+
+	const int ret = focuser.initialise();
+
+	zassert_equal(ret, 0, "initialise should succeed");
+	zassert_equal(store.load_calls, 1U, "should attempt to load persisted position once");
+	zassert_equal(store.save_calls, 0U, "restore should not persist back");
+
+	zassert_equal(fake_stepper_set_reference_position_fake.call_count, 2U,
+		"init should set reference to 0 then restored position");
+	zassert_equal(fake_stepper_set_reference_position_fake.arg1_history[0], 0,
+		"first reference position should be 0");
+	zassert_equal(fake_stepper_set_reference_position_fake.arg1_history[1], 0x1234,
+		"second reference position should be restored value");
+}
+
+ZTEST(focuser_app, test_set_current_position_persists_via_store)
+{
+	assert_stepper_devices_ready();
+	ZephyrFocuserStepper stepper(k_stepper_controller, k_stepper_driver);
+	MockPositionStore store;
+	Focuser focuser(stepper, &store, kFirmwareVersion);
+	zassert_ok(focuser.initialise(), "initialise precondition");
+
+	focuser.setCurrentPosition(0x1111);
+
+	zassert_equal(store.save_calls, 1U, "setCurrentPosition should persist once");
+	zassert_equal(store.last_saved, 0x1111, "persisted value should match set position");
+}
+
 ZTEST(focuser_app, test_set_speed_clamps_to_minimum_and_updates_interval)
 {
 	assert_stepper_devices_ready();
 	ZephyrFocuserStepper stepper(k_stepper_controller, k_stepper_driver);
-	Focuser focuser(stepper, kFirmwareVersion);
+	Focuser focuser(stepper, nullptr, kFirmwareVersion);
 	zassert_ok(focuser.initialise(), "initialise precondition");
 
 	const unsigned int initial_microstep_calls =
@@ -158,7 +225,8 @@ ZTEST(focuser_app, test_stop_stops_motion_and_disables_driver)
 {
 	assert_stepper_devices_ready();
 	ZephyrFocuserStepper stepper(k_stepper_controller, k_stepper_driver);
-	Focuser focuser(stepper, kFirmwareVersion);
+	MockPositionStore store;
+	Focuser focuser(stepper, &store, kFirmwareVersion);
 	zassert_ok(focuser.initialise(), "initialise precondition");
 
 	const unsigned int initial_stop_calls = fake_stepper_stop_fake.call_count;
@@ -182,13 +250,15 @@ ZTEST(focuser_app, test_stop_stops_motion_and_disables_driver)
 		initial_get_pos_calls + 1U, "stop queries actual position once");
 	zassert_equal(fake_stepper_drv_disable_fake.call_count, initial_disable_calls + 1U,
 		"stop should disable the driver once");
+	zassert_equal(store.save_calls, 1U, "stop should persist the last known position");
+	zassert_equal(store.last_saved, 0x4321, "stop should persist queried position");
 }
 
 ZTEST(focuser_app, test_initialise_ignores_ealready_from_driver)
 {
 	assert_stepper_devices_ready();
 	ZephyrFocuserStepper stepper(k_stepper_controller, k_stepper_driver);
-	Focuser focuser(stepper, kFirmwareVersion);
+	Focuser focuser(stepper, nullptr, kFirmwareVersion);
 
 	int enable_results[] = {-EALREADY, -EALREADY};
 	SET_RETURN_SEQ(fake_stepper_drv_enable, enable_results, 2);
@@ -198,6 +268,46 @@ ZTEST(focuser_app, test_initialise_ignores_ealready_from_driver)
 	zassert_equal(ret, 0, "-EALREADY responses should not fail init");
 	zassert_equal(fake_stepper_drv_enable_fake.call_count, 2U,
 		"two enable attempts should have occurred");
+}
+
+ZTEST(focuser_app, test_eeprom_position_store_roundtrip)
+{
+	static uint8_t backing_store[32];
+	std::memset(backing_store, 0xFF, sizeof(backing_store));
+
+	RESET_FAKE(fake_eeprom_read);
+	RESET_FAKE(fake_eeprom_write);
+	RESET_FAKE(fake_eeprom_size);
+
+	fake_eeprom_size_fake.custom_fake = [](const struct device *) -> size_t {
+		return sizeof(backing_store);
+	};
+
+	fake_eeprom_write_fake.custom_fake = [](const struct device *, off_t offset, const void *data, size_t len) -> int {
+		if ((offset < 0) || (static_cast<size_t>(offset) + len > sizeof(backing_store)))
+		{
+			return -EINVAL;
+		}
+		std::memcpy(&backing_store[static_cast<size_t>(offset)], data, len);
+		return 0;
+	};
+
+	fake_eeprom_read_fake.custom_fake = [](const struct device *, off_t offset, void *data, size_t len) -> int {
+		if ((offset < 0) || (static_cast<size_t>(offset) + len > sizeof(backing_store)))
+		{
+			return -EINVAL;
+		}
+		std::memcpy(data, &backing_store[static_cast<size_t>(offset)], len);
+		return 0;
+	};
+
+	EepromPositionStore store;
+	store.save(0x2222);
+
+	EepromPositionStore store2;
+	uint16_t loaded = 0U;
+	zassert_true(store2.load(loaded), "load should succeed after save");
+	zassert_equal(loaded, 0x2222, "loaded value should match saved");
 }
 
 ZTEST_SUITE(focuser_app, NULL, NULL, NULL, NULL, NULL);

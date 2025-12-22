@@ -12,6 +12,7 @@ project(app LANGUAGES C CXX)
 target_sources(app PRIVATE
 	src/main.cpp
 	src/Focuser.cpp
+	src/EepromPositionStore.cpp
 	src/FocuserThread.cpp
 	src/UartHandler.cpp
 	src/UartThread.cpp

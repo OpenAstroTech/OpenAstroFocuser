@@ -8,11 +8,12 @@
 #include <string>
 
 #include "FocuserStepper.hpp"
+#include "PositionStore.hpp"
 
 class Focuser final : public moonlite::Handler
 {
 public:
-	explicit Focuser(FocuserStepper &stepper, const char *firmware_version);
+	explicit Focuser(FocuserStepper &stepper, PositionStore *store, const char *firmware_version);
 
 	int initialise();
 	void loop();
@@ -70,9 +71,13 @@ private:
 	int apply_step_interval(uint64_t interval_ns);
 	int32_t read_actual_position();
 	int set_stepper_driver_enabled(bool enable);
+	void restore_position();
+	void applyCurrentPosition(uint16_t position, bool persist);
+	void save_position(uint16_t position);
 
 	const char *m_firmware_version;
 
 	FocuserState m_state{};
 	FocuserStepper &m_stepper;
+	PositionStore *m_store;
 };

@@ -22,8 +22,8 @@ namespace
 
 } // namespace
 
-Focuser::Focuser(FocuserStepper &stepper, const char *firmware_version)
-	: m_firmware_version(firmware_version), m_stepper(stepper)
+Focuser::Focuser(FocuserStepper &stepper, PositionStore *store, const char *firmware_version)
+	: m_firmware_version(firmware_version), m_stepper(stepper), m_store(store)
 {
 	(void)set_stepper_driver_enabled(true);
 }
@@ -49,6 +49,8 @@ int Focuser::initialise()
 		LOG_ERR("Failed to set stepper reference position (%d)", ret);
 		return ret;
 	}
+
+	restore_position();
 
 	uint64_t interval_ns = 0;
 	{
@@ -139,6 +141,7 @@ void Focuser::stop()
 	(void)m_stepper.stop();
 	(void)set_stepper_driver_enabled(false);
 	k_sem_give(&m_state.move_sem);
+	save_position(actual16);
 	LOG_INF("stop()");
 }
 
@@ -157,19 +160,7 @@ uint16_t Focuser::getCurrentPosition()
 
 void Focuser::setCurrentPosition(uint16_t position)
 {
-	LOG_DBG("setCurrentPosition()");
-	int ret = m_stepper.set_reference_position(static_cast<int32_t>(position));
-	if (ret != 0)
-	{
-		LOG_ERR("Failed to set reference position (%d)", ret);
-	}
-
-	MutexLock lock(m_state.lock);
-	m_state.staged_position = position;
-	m_state.desired_position = position;
-	m_state.move_request = false;
-	m_state.cancel_move = false;
-	LOG_INF("setCurrentPosition 0x%04x (%u)", position, position);
+	applyCurrentPosition(position, true);
 }
 
 uint16_t Focuser::getNewPosition()
@@ -356,6 +347,8 @@ void Focuser::move_to(uint16_t target)
 	{
 		(void)set_stepper_driver_enabled(false);
 	}
+
+	save_position(actual16);
 	LOG_DBG("Motion complete -> 0x%04x (%d)", static_cast<uint16_t>(actual & 0xFFFF), actual);
 }
 
@@ -389,6 +382,64 @@ int32_t Focuser::read_actual_position()
 		return static_cast<int32_t>(fallback);
 	}
 	return actual;
+}
+
+void Focuser::restore_position()
+{
+	if (m_store == nullptr)
+	{
+		LOG_INF("No position store configured; using default position 0");
+		return;
+	}
+
+	uint16_t persisted = 0U;
+	if (m_store->load(persisted))
+	{
+		LOG_INF("Restoring focuser position 0x%04x (%u) from store", persisted, persisted);
+		applyCurrentPosition(persisted, false);
+	}
+	else
+	{
+		LOG_INF("No persisted focuser position found, defaulting to 0");
+	}
+}
+
+void Focuser::applyCurrentPosition(uint16_t position, bool persist)
+{
+	LOG_DBG("setCurrentPosition()");
+	int ret = m_stepper.set_reference_position(static_cast<int32_t>(position));
+	if (ret != 0)
+	{
+		LOG_ERR("Failed to set reference position (%d)", ret);
+	}
+
+	{
+		MutexLock lock(m_state.lock);
+		m_state.staged_position = position;
+		m_state.desired_position = position;
+		m_state.move_request = false;
+		m_state.cancel_move = false;
+	}
+
+	if (persist)
+	{
+		save_position(position);
+		LOG_INF("setCurrentPosition 0x%04x (%u)", position, position);
+	}
+	else
+	{
+		LOG_INF("setCurrentPosition 0x%04x (%u) (no persist)", position, position);
+	}
+}
+
+void Focuser::save_position(uint16_t position)
+{
+	if (m_store == nullptr)
+	{
+		return;
+	}
+
+	m_store->save(position);
 }
 
 int Focuser::set_stepper_driver_enabled(bool enable)
