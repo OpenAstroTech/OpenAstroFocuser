@@ -148,7 +148,7 @@ west twister -T OpenAstroFocuser/tests --integration
 ## Roadmap
 
 - [ ] Automatic homing / end stop detection.
-- [ ] Saving of last known position in EEPROM
+- [ ] Support for Over-the-Air-Updates 
 
 See the [open issues](https://github.com/OpenAstroTech/OpenAstroFocuser/issues) for the full backlog.
 
