@@ -113,7 +113,7 @@ west flash
 To build MCUboot alongside the app and produce a signed application image:
 
 ```shell
-west build -p -b esp32s3_devkitc/esp32s3/procpu OpenAstroFocuser/app --sysbuild
+west build -p -b esp32s3_devkitc/esp32s3/procpu OpenAstroFocuser/app --sysbuild -S mcuboot
 ```
 
 Flash MCUboot first, then the application image:
@@ -126,7 +126,7 @@ west flash -d build/app
 Notes:
 
 - The signed application artifact is `build/app/zephyr/zephyr.signed.bin`.
-- This repo uses MCUboot's default test key for development; replace it for production.
+- By default, sysbuild uses MCUboot's development/test key from the `mcuboot` module; override `SB_CONFIG_BOOT_SIGNATURE_KEY_FILE` for production.
 
 Pass `-DEXTRA_CONF_FILE=debug.conf` for verbose logging or switch `-b` to any supported board/overlay.
 
